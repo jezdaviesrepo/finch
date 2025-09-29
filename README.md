@@ -95,7 +95,7 @@ finch/
 
 ### Data Files Structure
 - **`finch_dataset.json`**: Main dataset file with 75,725 NL-SQL pairs (appears in HF dataset viewer)
-- **`tables.json`**: Database schema metadata for all 33 databases (auxiliary file)
+- **`schemas/database_schemas.json`**: Database schema metadata for all 33 databases (auxiliary file)
 - **`text2sql-db/`**: SQLite database files organized by source (auxiliary files)
 
 ### Sample Data from finch_dataset.json
@@ -132,9 +132,9 @@ finch/
 ]
 ```
 
-### Schema Information (tables.json)
+### Schema Information (schemas/database_schemas.json)
 
-The `tables.json` file contains comprehensive schema metadata for all databases:
+The `schemas/database_schemas.json` file contains comprehensive schema metadata for all databases:
 
 ```json
 {
@@ -168,7 +168,7 @@ from huggingface_hub import hf_hub_download
 import sqlite3
 
 # Load the main dataset using HuggingFace datasets library
-dataset = load_dataset("domyn/finch")
+dataset = load_dataset("reeturajahrsh1907/finch")
 print(f"Dataset: {dataset}")
 print(f"Number of examples: {len(dataset['train'])}")
 
@@ -180,14 +180,14 @@ print(f"Database: {sample['db_id']}")
 print(f"Difficulty: {sample['difficulty']}")
 
 # Load schema information for the database
-schema_path = hf_hub_download(repo_id="domyn/finch", filename="tables.json")
+schema_path = hf_hub_download(repo_id="reeturajahrsh1907/finch", filename="schemas/database_schemas.json")
 import json
 with open(schema_path, 'r') as f:
     schemas = json.load(f)
 
 # Download the corresponding SQLite database
 db_path = hf_hub_download(
-    repo_id="domyn/finch", 
+    repo_id="reeturajahrsh1907/finch", 
     filename=f"text2sql-db/text2sql/bird/{sample['db_id']}.sqlite"
 )
 
@@ -207,7 +207,7 @@ import sqlite3
 from huggingface_hub import hf_hub_download
 
 # Alternative: Load dataset JSON file directly
-samples_path = hf_hub_download(repo_id="domyn/finch", filename="finch_dataset.json")
+samples_path = hf_hub_download(repo_id="reeturajahrsh1907/finch", filename="finch_dataset.json")
 with open(samples_path, 'r') as f:
     dataset = json.load(f)
 
