@@ -95,7 +95,7 @@ finch/
 
 ### Data Files Structure
 - **`finch_dataset.json`**: Main dataset file with 75,725 NL-SQL pairs (appears in HF dataset viewer)
-- **`schemas/database_schemas.json`**: Database schema metadata for all 33 databases (auxiliary file)
+- **`schemas/database_schemas.yaml`**: Database schema metadata for all 33 databases (auxiliary file)
 - **`text2sql-db/`**: SQLite database files organized by source (auxiliary files)
 
 ### Sample Data from finch_dataset.json
@@ -132,28 +132,48 @@ finch/
 ]
 ```
 
-### Schema Information (schemas/database_schemas.json)
+### Schema Information (schemas/database_schemas.yaml)
 
-The `schemas/database_schemas.json` file contains comprehensive schema metadata for all databases:
+The `schemas/database_schemas.yaml` file contains comprehensive schema metadata for all databases:
 
-```json
-{
-  "financial": {
-    "db_id": "financial",
-    "table_names_original": ["account", "card", "client", "disp", "district", "loan", "order", "trans"],
-    "table_names": ["account", "card", "client", "disposition", "district", "loan", "order", "transaction"],
-    "column_names_original": [
-      [-1, "*"],
-      [0, "account_id"],
-      [0, "district_id"], 
-      [0, "frequency"],
-      [0, "date"]
-    ],
-    "column_types": ["text", "number", "number", "text", "text"],
-    "foreign_keys": [[2, 1], [4, 2]],
-    "primary_keys": [1]
-  }
-}
+```yaml
+financial:
+  db_id: financial
+  table_names_original:
+    - account
+    - card
+    - client
+    - disp
+    - district
+    - loan
+    - order
+    - trans
+  table_names:
+    - account
+    - card
+    - client
+    - disposition
+    - district
+    - loan
+    - order
+    - transaction
+  column_names_original:
+    - [-1, "*"]
+    - [0, "account_id"]
+    - [0, "district_id"]
+    - [0, "frequency"]
+    - [0, "date"]
+  column_types:
+    - text
+    - number
+    - number
+    - text
+    - text
+  foreign_keys:
+    - [2, 1]
+    - [4, 2]
+  primary_keys:
+    - 1
 ```
 
 ## Example Usage
@@ -166,9 +186,10 @@ The `schemas/database_schemas.json` file contains comprehensive schema metadata 
 from datasets import load_dataset
 from huggingface_hub import hf_hub_download
 import sqlite3
+import yaml
 
 # Load the main dataset using HuggingFace datasets library
-dataset = load_dataset("reeturajahrsh1907/finch")
+dataset = load_dataset("domyn/finch")
 print(f"Dataset: {dataset}")
 print(f"Number of examples: {len(dataset['train'])}")
 
@@ -180,14 +201,13 @@ print(f"Database: {sample['db_id']}")
 print(f"Difficulty: {sample['difficulty']}")
 
 # Load schema information for the database
-schema_path = hf_hub_download(repo_id="reeturajahrsh1907/finch", filename="schemas/database_schemas.json")
-import json
+schema_path = hf_hub_download(repo_id="domyn/finch", filename="schemas/database_schemas.yaml")
 with open(schema_path, 'r') as f:
-    schemas = json.load(f)
+    schemas = yaml.safe_load(f)
 
 # Download the corresponding SQLite database
 db_path = hf_hub_download(
-    repo_id="reeturajahrsh1907/finch", 
+    repo_id="domyn/finch", 
     filename=f"text2sql-db/text2sql/bird/{sample['db_id']}.sqlite"
 )
 
@@ -207,7 +227,7 @@ import sqlite3
 from huggingface_hub import hf_hub_download
 
 # Alternative: Load dataset JSON file directly
-samples_path = hf_hub_download(repo_id="reeturajahrsh1907/finch", filename="finch_dataset.json")
+samples_path = hf_hub_download(repo_id="domyn/finch", filename="finch_dataset.json")
 with open(samples_path, 'r') as f:
     dataset = json.load(f)
 
