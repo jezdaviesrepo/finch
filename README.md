@@ -1,25 +1,11 @@
 ---
-license: cc-by-nc-4.0
 task_categories:
-- text2sql
-- text-to-sql
-- semantic-parsing
-language:
-- en
+- text-retrieval
 tags:
-- sql
-- database
-- finch
-- financial
 - text2sql
-- semantic-parsing
-- nlp
-- sqlite
-- database-schemas
-- finance
-pretty_name: FINCH - Financial Intelligence using Natural language for Contextualized SQL Handling
-size_categories:
-- 10K<n<100K
+- text-2-sql
+- texttosql
+- text-to-sql
 ---
 
 # Dataset Card for FINCH - Financial Intelligence using Natural language for Contextualized SQL Handling
