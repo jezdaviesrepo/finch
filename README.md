@@ -48,6 +48,12 @@ This dataset addresses a critical gap in Text-to-SQL research: despite significa
 
 ## Dataset Structure
 
+<div align="center">
+  <img src="finch.png" alt="FINCH - Financial Intelligence using Natural language for Contextualized SQL Handling" width="400"/>
+</div>
+
+<br>
+
 The dataset is organized by financial domain with meaningful database names:
 
 ### File Organization
