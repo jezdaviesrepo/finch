@@ -6,6 +6,12 @@ tags:
 - text-2-sql
 - texttosql
 - text-to-sql
+license: cc-by-nc-4.0
+language:
+- en
+pretty_name: FINCH
+size_categories:
+- 10K<n<100K
 ---
 
 # Dataset Card for FINCH - Financial Intelligence using Natural language for Contextualized SQL Handling
