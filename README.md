@@ -189,7 +189,7 @@ import sqlite3
 import yaml
 
 # Load the main dataset using HuggingFace datasets library
-dataset = load_dataset("domyn/finch")
+dataset = load_dataset("domyn/FINCH")
 print(f"Dataset: {dataset}")
 print(f"Number of examples: {len(dataset['train'])}")
 
@@ -201,13 +201,13 @@ print(f"Database: {sample['db_id']}")
 print(f"Difficulty: {sample['difficulty']}")
 
 # Load schema information for the database
-schema_path = hf_hub_download(repo_id="domyn/finch", filename="schemas/database_schemas.yaml")
+schema_path = hf_hub_download(repo_id="domyn/FINCH", filename="schemas/database_schemas.yaml")
 with open(schema_path, 'r') as f:
     schemas = yaml.safe_load(f)
 
 # Download the corresponding SQLite database
 db_path = hf_hub_download(
-    repo_id="domyn/finch", 
+    repo_id="domyn/FINCH", 
     filename=f"text2sql-db/text2sql/bird/{sample['db_id']}.sqlite"
 )
 
@@ -227,7 +227,7 @@ import sqlite3
 from huggingface_hub import hf_hub_download
 
 # Alternative: Load dataset JSON file directly
-samples_path = hf_hub_download(repo_id="domyn/finch", filename="finch_dataset.json")
+samples_path = hf_hub_download(repo_id="domyn/FINCH", filename="finch_dataset.json")
 with open(samples_path, 'r') as f:
     dataset = json.load(f)
 
