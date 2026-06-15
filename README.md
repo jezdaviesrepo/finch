@@ -6,9 +6,6 @@ A comprehensive collection of SQLite databases from the FINCH benchmark, contain
 
 ### Dataset Description
 
-**Authors:** Anonymous (under review)  
-**Language(s):** English  
-**License:** CC-BY-NC-4.0
 
 FINCH (Financial Intelligence using Natural language for Contextualized SQL Handling) provides SQLite database files from a carefully curated financial Text-to-SQL benchmark that consolidates and extends existing resources into a unified, finance-specific dataset. Each database preserves original schema structure, relationships, and data while focusing specifically on financial domains and applications.
 
@@ -397,21 +394,3 @@ The curation process prioritized financial domain relevance while maintaining th
 - **Synthetic Data**: Financial amounts and transactions are synthetic or anonymized
 - **Research Purpose**: Intended primarily for academic and research applications
 - **Domain Compliance**: Respects financial data handling best practices
-
-## Citation
-
-If you use the FINCH dataset in your research, please cite:
-
-```bibtex
-@inproceedings{anonymous2025finch,
-  title={FINCH: Financial Intelligence using Natural language for Contextualized SQL Handling},
-  author={Anonymous},
-  booktitle={Proceedings of Advances in Financial AI: Innovations, Risk, and Responsibility in the Era of LLMs (CIKM 2025)},
-  year={2025},
-  organization={ACM}
-}
-```
-
-## Dataset Card Contact
-
-For questions about the FINCH dataset, please contact the authors. Author and contact details are withheld for anonymous review.
