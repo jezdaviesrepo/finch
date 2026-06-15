@@ -22,8 +22,7 @@ A comprehensive collection of SQLite databases from the FINCH benchmark, contain
 
 ### Dataset Description
 
-**Curated by:** [Domyn](https://www.domyn.com/)  
-**Authors:** Avinash Kumar Singh, Bhaskarjit Sarmah, Stefano Pasquali  
+**Authors:** Anonymous (under review)  
 **Language(s):** English  
 **License:** CC-BY-NC-4.0
 
@@ -195,7 +194,7 @@ import sqlite3
 import yaml
 
 # Load the main dataset using HuggingFace datasets library
-dataset = load_dataset("domyn/FINCH")
+dataset = load_dataset("anonymous/FINCH")
 print(f"Dataset: {dataset}")
 print(f"Number of examples: {len(dataset['train'])}")
 
@@ -207,13 +206,13 @@ print(f"Database: {sample['db_id']}")
 print(f"Difficulty: {sample['difficulty']}")
 
 # Load schema information for the database
-schema_path = hf_hub_download(repo_id="domyn/FINCH", filename="schemas/database_schemas.yaml")
+schema_path = hf_hub_download(repo_id="anonymous/FINCH", filename="schemas/database_schemas.yaml")
 with open(schema_path, 'r') as f:
     schemas = yaml.safe_load(f)
 
 # Download the corresponding SQLite database
 db_path = hf_hub_download(
-    repo_id="domyn/FINCH", 
+    repo_id="anonymous/FINCH", 
     filename=f"text2sql-db/text2sql/bird/{sample['db_id']}.sqlite"
 )
 
@@ -233,7 +232,7 @@ import sqlite3
 from huggingface_hub import hf_hub_download
 
 # Alternative: Load dataset JSON file directly
-samples_path = hf_hub_download(repo_id="domyn/FINCH", filename="finch_dataset.json")
+samples_path = hf_hub_download(repo_id="anonymous/FINCH", filename="finch_dataset.json")
 with open(samples_path, 'r') as f:
     dataset = json.load(f)
 
@@ -420,9 +419,9 @@ The curation process prioritized financial domain relevance while maintaining th
 If you use the FINCH dataset in your research, please cite:
 
 ```bibtex
-@inproceedings{singh2025finch,
+@inproceedings{anonymous2025finch,
   title={FINCH: Financial Intelligence using Natural language for Contextualized SQL Handling},
-  author={Singh, Avinash Kumar and Sarmah, Bhaskarjit and Pasquali, Stefano},
+  author={Anonymous},
   booktitle={Proceedings of Advances in Financial AI: Innovations, Risk, and Responsibility in the Era of LLMs (CIKM 2025)},
   year={2025},
   organization={ACM}
@@ -431,9 +430,4 @@ If you use the FINCH dataset in your research, please cite:
 
 ## Dataset Card Contact
 
-For questions about the FINCH dataset, please contact the research team at Domyn.
-
-**Research Team:**
-- Avinash Kumar Singh (avinash.kumarsingh@domyn.com)
-- Bhaskarjit Sarmah (bhaskarjit.sarmah@domyn.com)  
-- Stefano Pasquali (stefano.pasquali@domyn.com)
+For questions about the FINCH dataset, please contact the authors. Author and contact details are withheld for anonymous review.
