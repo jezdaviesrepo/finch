@@ -1,19 +1,3 @@
----
-task_categories:
-- text-retrieval
-tags:
-- text2sql
-- text-2-sql
-- texttosql
-- text-to-sql
-license: cc-by-nc-4.0
-language:
-- en
-pretty_name: FINCH
-size_categories:
-- 10K<n<100K
----
-
 # Dataset Card for FINCH - Financial Intelligence using Natural language for Contextualized SQL Handling
 
 A comprehensive collection of SQLite databases from the FINCH benchmark, containing **33 databases** with **292 tables** and **75,725 natural language-SQL pairs** across diverse financial domains for Text-to-SQL research and development.
