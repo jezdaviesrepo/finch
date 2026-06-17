@@ -1,25 +1,25 @@
-# Dataset Card for FINCH - Financial Intelligence using Natural language for Contextualized SQL Handling
+# Dataset Card for FINCH: Diagnosing the Financial Grounding Gap in Text-to-SQL
 
-A comprehensive collection of SQLite databases from the FINCH benchmark, containing **33 databases** with **292 tables** and **75,725 natural language-SQL pairs** across diverse financial domains for Text-to-SQL research and development.
+A comprehensive collection of SQLite databases from the FINCH benchmark, containing **33 databases** with **270 tables** and **75,725 natural language-SQL pairs** across diverse financial domains for Text-to-SQL research and development.
 
 ## Dataset Details
 
 ### Dataset Description
 
 
-FINCH (Financial Intelligence using Natural language for Contextualized SQL Handling) provides SQLite database files from a carefully curated financial Text-to-SQL benchmark that consolidates and extends existing resources into a unified, finance-specific dataset. Each database preserves original schema structure, relationships, and data while focusing specifically on financial domains and applications.
+FINCH provides SQLite database files from a carefully curated financial Text-to-SQL benchmark that consolidates and extends existing resources into a unified, finance-specific dataset. Each database preserves original schema structure, relationships, and data while focusing specifically on financial domains and applications.
 
 This dataset addresses a critical gap in Text-to-SQL research: despite significant progress in general-domain benchmarks, financial applications remain especially challenging due to complex schemas, domain-specific terminology, and high stakes of error. FINCH provides the first large-scale, finance-oriented Text-to-SQL benchmark suitable for both evaluation and fine-tuning.
 
 ### Dataset Sources
 
-**Paper:** FINCH: Financial Intelligence using Natural language for Contextualized SQL Handling *(coming soon)*  
+**Paper:** FINCH: Diagnosing the Financial Grounding Gap in Text-to-SQL *(coming soon)*  
 
 
 ## Key Features
 
 - **33 SQLite databases** specifically curated for financial applications
-- **292 tables** with **2,233 columns** and **177 relations**
+- **270 tables** with **2,161 columns** and **177 relations**
 - **75,725 NL-SQL pairs** for comprehensive training and evaluation
 - **Financial domain focus** including retail, banking, insurance, e-commerce, funds, stocks, and accounting
 - **Direct SQLite format** - ready for SQL queries and analysis
@@ -29,7 +29,7 @@ This dataset addresses a critical gap in Text-to-SQL research: despite significa
 ## Dataset Structure
 
 <div align="center">
-  <img src="finch.png" alt="FINCH - Financial Intelligence using Natural language for Contextualized SQL Handling" width="400"/>
+  <img src="finch.png" alt="FINCH" width="400"/>
 </div>
 
 <br>
@@ -168,23 +168,23 @@ financial:
 
 **📊 TOTAL DATABASES: 33**  
 **📅 FINANCIAL DOMAINS: 8+ specialized areas**  
-**🏢 TABLES: 292 across all databases**  
+**🏢 TABLES: 270 across all databases**  
 **🔗 RELATIONS: 177 foreign key relationships**  
 **💼 NL-SQL PAIRS: 75,725 total examples**
 
 | Source | Database Count | Table Count | NL-SQL Pairs | Domain Focus |
 |--------|---------------|-------------|--------------|--------------|
-| Spider (financial) | 22 | 145 | 1,100 | Cross-domain financial |
-| BIRD (financial) | 7 | 48 | 1,139 | Large-scale realistic |
-| BULL/CCKS | 3 | 99 | 4,966 | Chinese financial markets |
-| BookSQL | 1 | 185 | 68,907 | Accounting systems |
-| **TOTAL** | **33** | **292** | **75,725** | **Financial** |
+| Spider (financial) | 22 | 143 | 1,100 | Cross-domain financial |
+| BIRD (financial) | 7 | 42 | 752 | Large-scale realistic |
+| BULL/CCKS | 3 | 78 | 4,966 | Chinese financial markets |
+| BookSQL | 1 | 7 | 68,907 | Accounting systems |
+| **TOTAL** | **33** | **270** | **75,725** | **Financial** |
 
 ### Difficulty Distribution
 
-- **Easy queries**: 9,358 examples (12.4%)
-- **Medium queries**: 33,780 examples (44.6%) 
-- **Hard queries**: 32,587 examples (43.0%)
+- **Easy queries**: 17,832 examples (23.5%)
+- **Medium queries**: 48,233 examples (63.7%) 
+- **Hard queries**: 9,660 examples (12.8%)
 
 ### Quality Assurance
 
@@ -219,64 +219,6 @@ This dataset is specifically designed for:
 - **Financial SQL Training**: Teach SQL with realistic financial datasets
 - **Business Intelligence Education**: Train on real-world financial database structures
 - **Fintech Development**: Build and test financial technology applications
-
-## FINCH Evaluation Metric
-
-The dataset introduces the **FINCH Score**, a specialized evaluation metric for financial Text-to-SQL that addresses limitations of traditional exact-match and execution accuracy metrics:
-
-### Key Features of FINCH Score
-- **Component-wise Scoring**: Weighted evaluation of SQL clauses (SELECT, WHERE, JOIN, etc.)
-- **Financial Clause Priority**: Higher weights for business-critical clauses (WHERE, JOIN, GROUP BY)
-- **Execution Tolerance**: Materiality-aware tolerance for floating-point differences
-- **Structural Fidelity**: Emphasis on semantic correctness over syntactic matching
-
-### Mathematical Formulation
-```
-FINCH Score = S(q̂,q*)^β × (δ + (1-δ)e(q̂,q*))
-```
-Where:
-- S(q̂,q*): Weighted component similarity score
-- e(q̂,q*): Execution accuracy with tolerance τ
-- β: Structural fidelity parameter
-- δ: Execution failure penalty parameter
-
-## Benchmark Results
-
-Initial benchmarking on FINCH reveals detailed performance across multiple state-of-the-art models:
-
-### Model Performance Table
-
-| Model | Exact Match | Execution Accuracy | Component Match | FINCH Score |
-|-------|-------------|-------------------|-----------------|-------------|
-| **GPT-OSS-120B** | 1.8% | 27.8% | 16.6% | **11.6%** |
-| **Arctic-Text2SQL-R1-7B** | 0.6% | 2.3% | 3.7% | **1.5%** |
-| **Qwen3-235B-A22B** | 0.7% | 2.5% | 2.8% | **1.2%** |
-| **Qwen3-8B** | 0.5% | 0.8% | 3.5% | 1.2% |
-| **GPT-OSS-20B** | 0.3% | 7.5% | 5.2% | 3.0% |
-| **Phi-4-mini-reasoning** | 0.0% | 0.2% | 1.0% | 0.4% |
-
-### SQL Clause-Level Performance
-
-Analysis of errors by SQL clause reveals systematic challenges:
-
-| Model | SELECT | FROM | WHERE | GROUP BY | HAVING | ORDER BY | LIMIT |
-|-------|--------|------|-------|----------|--------|----------|--------|
-| **GPT-OSS-120B** | 4.7% | **27.3%** | 6.9% | 7.5% | 6.3% | 6.3% | **73.8%** |
-| **Arctic-Text2SQL-R1-7B** | 2.5% | 3.6% | 0.7% | 4.7% | 1.0% | 1.3% | 42.7% |
-| **GPT-OSS-20B** | 1.4% | 6.2% | 1.5% | 8.4% | 3.7% | 1.5% | 65.2% |
-
-### Model Performance Hierarchy
-1. **GPT-OSS-120B**: Strongest overall performance (11.6% FINCH Score)
-2. **Arctic-Text2SQL-R1-7B**: Best domain-adapted model despite smaller size (1.5% FINCH Score)
-3. **GPT-OSS-20B**: Solid medium-scale performance (3.0% FINCH Score)
-
-### Key Research Findings
-- **Domain adaptation** outperforms scale alone - Arctic-Text2SQL-R1-7B (7B params) rivals much larger models
-- **Schema-sensitive clauses** (SELECT, FROM, WHERE) remain the primary bottleneck
-- **Query difficulty** shows steep performance degradation: easy queries achieve ~26.5% vs hard queries at ~4.5%
-- **Financial complexity** significantly impacts all models, with even SOTA systems achieving modest absolute performance
-- **FINCH Score correlation**: Provides more nuanced assessment than traditional exact-match metrics
-
 
 ## Data Source & Methodology
 
