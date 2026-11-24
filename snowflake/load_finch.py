@@ -11,6 +11,7 @@ Usage:
 import argparse
 import json
 import pathlib
+import re
 import sqlite3
 import urllib.request
 
@@ -78,9 +79,68 @@ def load_sqlite(sf, database, db_id, path):
         print(f"  {schema}.{table.upper()}: {rows:,} rows")
 
 
+# BookSQL questions are relative to "today"; its data ends on this date
+TODAY = {"accounting": "2023-04-26"}
+DOW = ["su", "mo", "tu", "we", "th", "fr", "sa"]  # SQLite 'weekday N': 0 = Sunday
+
+
+def repair_gold(sql, db_id):
+    """Undo damage from FINCH lower-casing its gold SQL, string literals included:
+    - 'east bohemia' vs data 'east Bohemia': compare string predicates case-insensitively
+    - strftime('%y') was '%Y' (4-digit year)
+    and pin CURRENT_DATE / 'now' for BookSQL, whose data stops at TODAY."""
+    sql = re.sub(r"(strftime\(\s*')([^']*)'", lambda m: m[1] + m[2].replace("%y", "%Y") + "'", sql, flags=re.I)
+    if db_id in TODAY:
+        sql = re.sub(r"\bcurrent_date\b|'now'", f"'{TODAY[db_id]}'", sql, flags=re.I)
+    tree = sqlglot.parse_one(sql, read="sqlite")
+    for node in list(tree.find_all(exp.EQ, exp.NEQ, exp.In)):
+        # only direct literals: a literal inside a subquery or function says nothing about the outer column
+        if isinstance(node, exp.In):
+            col, others = node.this, node.expressions
+        elif isinstance(node.left, exp.Literal):
+            col, others = node.right, [node.left]
+        else:
+            col, others = node.left, [node.right]
+        if any(o.is_string for o in others) and not isinstance(col, exp.Literal):
+            col.replace(exp.Lower(this=col.copy()))
+    return tree.sql(dialect="sqlite")
+
+
+def sqlite_date(args):
+    """SQLite DATE(x, 'start of year', '-1 month', 'weekday 0', ...) args -> Snowflake SQL text, or None."""
+    base = args[0]
+    e = "CURRENT_DATE" if base.is_string and base.name.lower() == "now" else f"CAST({base.sql('snowflake')} AS DATE)"
+    for m in args[1:]:
+        s = m.name.lower().strip() if m.is_string else ""
+        if s.startswith("start of "):
+            e = f"DATE_TRUNC('{s[9:]}', {e})"
+        elif mm := re.fullmatch(r"([+-]?\d+) (day|month|year)s?", s):
+            e = f"DATEADD({mm[2]}, {int(mm[1])}, {e})"
+        elif mm := re.fullmatch(r"weekday ([0-6])", s):
+            e = f"NEXT_DAY(DATEADD(day, -1, {e}), '{DOW[int(mm[1])]}')"
+        else:
+            return None  # unknown modifier: leave as-is
+    return e
+
+
 def to_snowflake(sql, schema):
     """SQLite gold SQL -> Snowflake SQL, identifiers upper-cased and tables qualified with their schema."""
     tree = sqlglot.parse_one(sql, read="sqlite")
+    for node in list(tree.find_all(exp.Anonymous)):
+        name, args = node.name.upper(), node.expressions
+        snow = None
+        if name == "DATE" and args:
+            snow = sqlite_date(args)
+        elif name == "STRFTIME" and len(args) > 2 and args[0].is_string:  # STRFTIME(fmt, date, modifiers...)
+            d = sqlite_date(args[1:])
+            fmt = args[0].name
+            for a, b in (("%Y", "YYYY"), ("%m", "MM"), ("%d", "DD"), ("%H", "HH24"), ("%M", "MI"), ("%S", "SS")):
+                fmt = fmt.replace(a, b)
+            snow = d and f"TO_CHAR({d}, '{fmt}')"
+        if snow:
+            node.replace(sqlglot.parse_one(snow, read="snowflake"))
+    for node in list(tree.find_all(exp.Like)):  # SQLite LIKE ignores case, Snowflake's does not
+        node.replace(exp.ILike(this=node.this.copy(), expression=node.expression.copy()))
     ctes = {c.alias_or_name.upper() for c in tree.find_all(exp.CTE)}
     for ident in tree.find_all(exp.Identifier):
         ident.set("this", ident.this.upper())
@@ -96,7 +156,7 @@ def load_pairs(sf, database):
     out, errs = [], []
     for sql, db_id in zip(pairs["SQL"], pairs["db_id"]):
         try:
-            out.append(to_snowflake(sql, db_id.upper()))
+            out.append(to_snowflake(repair_gold(sql, db_id), db_id.upper()))
             errs.append(None)
         except Exception as e:  # keep the row; record why conversion failed
             out.append(None)
@@ -106,19 +166,20 @@ def load_pairs(sf, database):
     pairs["conversion_error"] = errs
     pairs.columns = [c.upper() for c in pairs.columns]
     pairs = pairs.astype({c: "string" for c in pairs.columns if c != "QUESTION_ID"})
-    sf.cursor().execute(f"create or replace schema {database}.BENCHMARK")
-    write_pandas(sf, pairs, "NL_SQL_PAIRS", database=database, schema="BENCHMARK", auto_create_table=True)
+    # not "create or replace": evaluate.py keeps EVAL_RESULTS in this schema
+    sf.cursor().execute(f"create schema if not exists {database}.BENCHMARK")
+    write_pandas(sf, pairs, "NL_SQL_PAIRS", database=database, schema="BENCHMARK", auto_create_table=True, overwrite=True)
     print(f"BENCHMARK.NL_SQL_PAIRS: {len(pairs):,} rows, {sum(e is not None for e in errs)} conversion errors")
     return set(pairs["DB_ID"])
 
 
-def main():
-    ap = argparse.ArgumentParser()
+def connection_args(ap):
     ap.add_argument("--connection", default="default", help="name in ~/.snowflake/connections.toml")
     ap.add_argument("--warehouse")
     ap.add_argument("--database", default="FINCH")
-    args = ap.parse_args()
 
+
+def connect(args):
     # no Keychain token cache: a stale cached OAuth token fails instead of re-prompting
     sf = snowflake.connector.connect(connection_name=args.connection, client_store_temporary_credential=False)
     cur = sf.cursor()
@@ -127,9 +188,21 @@ def main():
         warehouse = cur.execute("show warehouses").fetchone()[0]
     cur.execute(f"use warehouse {q(warehouse)}")
     print(f"using warehouse {warehouse}")
+    return sf
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    connection_args(ap)
+    ap.add_argument("--pairs-only", action="store_true", help="reload BENCHMARK.NL_SQL_PAIRS only")
+    args = ap.parse_args()
+
+    sf = connect(args)
     sf.cursor().execute(f"create database if not exists {args.database}")
 
     db_ids = load_pairs(sf, args.database)
+    if args.pairs_only:
+        return
     for path in sorted((ROOT / "text2sql-db").rglob("*.sqlite")):
         if path.stem not in db_ids:  # e.g. stray bird/bird.sqlite, not referenced by any question
             print(f"skipping {path.relative_to(ROOT)} (no questions use it)")
