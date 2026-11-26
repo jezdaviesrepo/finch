@@ -20,15 +20,19 @@ Usage:
 import argparse
 import datetime
 import decimal
+import json
+import pathlib
 import re
 import sqlite3
 import time
 
 import pandas as pd
+import sqlglot
+from sqlglot import exp
 from snowflake.connector.pandas_tools import write_pandas
 
 from history import save_run
-from load_finch import ROOT, TODAY, connect, connection_args, q, real_file, repair_gold, compares_text_with_number
+from load_finch import TODAY, compares_text_with_number, connect, connection_args, q, repair_gold, sqlite_file
 
 PROMPT = """You are an expert Snowflake SQL analyst.
 Write one Snowflake SQL query that answers the question. The current schema is {schema}; refer to
@@ -58,6 +62,78 @@ def same_result(gold_rows, pred_rows, ordered):
     g = [tuple(map(norm, r)) for r in gold_rows]
     p = [tuple(map(norm, r)) for r in pred_rows]
     return g == p if ordered else sorted(g) == sorted(p)
+
+
+def contains_result(gold_rows, pred_rows, ordered):
+    """Lenient scoring: the model's answer has the same rows as the gold answer, and every gold column appears
+    among its columns; extra columns are allowed (e.g. a district name next to the asked-for id)."""
+    if not gold_rows or len(gold_rows) != len(pred_rows):
+        return False
+    g = [tuple(map(norm, r)) for r in gold_rows]
+    p = [tuple(map(norm, r)) for r in pred_rows]
+    gcols, pcols, pick = list(zip(*g)), list(zip(*p)), []
+    for col in gcols:  # ponytail: greedy column match, then the rows are checked as a whole below
+        hit = next((i for i, c in enumerate(pcols) if i not in pick and (c == col if ordered else sorted(c) == sorted(col))), None)
+        if hit is None:
+            return False
+        pick.append(hit)
+    return same_result(g, [tuple(r[i] for i in pick) for r in p], ordered)
+
+
+def gold_ties(path, sql, timeout_s=120):
+    """If the gold query ends ORDER BY ... LIMIT n and the cut-off falls inside a tie between different answers, LIMIT
+    keeps an arbitrary pick (e.g. one of 315 accounts that all traded on the same first day). Returns
+    (n, rows kept before the tie, rows in the tie), or None when the gold answer is well defined."""
+    try:
+        tree = sqlglot.parse_one(sql, read="sqlite")
+    except Exception:
+        return None
+    lim, order = tree.args.get("limit"), tree.args.get("order")
+    if not (isinstance(tree, exp.Select) and lim and order and lim.expression) or tree.args.get("offset"):
+        return None  # ponytail: outer LIMIT only; a tie inside a subquery is not detected
+    n, probe = int(lim.expression.name), tree.copy()
+    width = len(probe.expressions)
+    probe.set("limit", None)
+    probe.set("expressions", probe.expressions + [exp.alias_(o.this.copy(), f"__k{i}") for i, o in enumerate(order.expressions)])
+    try:
+        rows = sqlite_rows(path, probe.sql(dialect="sqlite"), timeout_s)
+    except Exception:
+        return None
+    if len(rows) <= n or rows[n - 1][width:] != rows[n][width:]:
+        return None
+    key = rows[n - 1][width:]
+    group = {r[:width] for r in rows if r[width:] == key}
+    return (n, [r[:width] for r in rows[:n] if r[width:] != key], group) if len(group) > 1 else None
+
+
+def tie_ok(ties, pred_rows, pred_count):
+    """Right despite the tie: every row returned is one the gold could have kept, and the model returned either as
+    many rows as the LIMIT or the whole tie."""
+    n, before, group = ties
+    allowed = {tuple(map(norm, r)) for r in list(before) + list(group)}
+    return pred_count in (n, len(before) + len(group)) and all(tuple(map(norm, r)) in allowed for r in pred_rows)
+
+
+# questions whose FINCH gold answer a person reviewed and found wrong or too narrow: other answers also count as right
+REVIEW = json.loads(pathlib.Path(__file__).with_name("gold_review.json").read_text())
+
+
+def reviewed(db_id, question_id):
+    """{'issue': why the gold is disputed, 'also_right': [SQL whose answer also counts as right]} or None."""
+    return REVIEW.get(db_id, {}).get(str(question_id))
+
+
+def also_right(path, review, pred_rows, timeout_s=120):
+    """(strict, lenient) verdicts of pred_rows against the reviewed alternative answers."""
+    strict = lenient = False
+    for sql in review["also_right"]:
+        alt, ordered = sqlite_rows(path, sql, timeout_s), "order by" in sql.lower()
+        strict = strict or same_result(alt, pred_rows, ordered)
+        lenient = lenient or contains_result(alt, pred_rows, ordered)
+    return strict, lenient or strict
+
+
+TIE_NOTE = "Gold answer arbitrary: FINCH's gold SQL keeps {n} row(s) with ORDER BY ... LIMIT, but {tied} different answers tie at the cut-off, so which one it keeps is chance. Any of the tied answers, or all of them, counts as right."
 
 
 def sqlite_rows(path, sql, timeout_s):
@@ -95,23 +171,41 @@ def examples(pool, question, n):
     return "\nSimilar questions with correct SQL:\n" + "\n".join(f"Q: {t}\nSQL: {s}" for _, t, s in top) + "\n"
 
 
-def schema_text(cur, database, schema):
+def schema_text(cur, database, schema, keys=False):
     """Tables and columns for the prompt: TABLE(COL TYPE, ...). Tables with descriptions (COMMENTs, see context.py)
-    get them too, one column per line; tables without keep the one-line form, so their prompt text is unchanged."""
+    get them too, one column per line; tables without keep the one-line form. keys=True adds each table's primary
+    and foreign keys, read from Snowflake."""
     cols = cur.execute(f"select table_name, column_name, data_type, comment from {database}.information_schema.columns "
                        "where table_schema = %s order by table_name, ordinal_position", (schema,)).fetchall()
     notes = dict(cur.execute(f"select table_name, comment from {database}.information_schema.tables "
                              "where table_schema = %s and comment is not null", (schema,)).fetchall())
+    extra = {}
+    if keys:
+        def show(kind):
+            rows = cur.execute(f"show {kind} keys in schema {database}.{q(schema)}").fetchall()
+            return [dict(zip([d[0] for d in cur.description], r)) for r in rows]
+        pks, fks = {}, {}
+        for k in sorted(show("primary"), key=lambda k: k["key_sequence"]):
+            pks.setdefault(k["table_name"], []).append(q(k["column_name"]))
+        for k in sorted(show("imported"), key=lambda k: k["key_sequence"]):
+            fk = fks.setdefault((k["fk_table_name"], k["fk_name"]), [k["pk_table_name"], [], []])
+            fk[1].append(q(k["fk_column_name"]))
+            fk[2].append(q(k["pk_column_name"]))
+        for t, cs in pks.items():
+            extra.setdefault(t, []).append(f"PRIMARY KEY ({', '.join(cs)})")
+        for (t, _), (parent, cs, ps) in sorted(fks.items()):
+            extra.setdefault(t, []).append(f"FOREIGN KEY ({', '.join(cs)}) REFERENCES {q(parent)}({', '.join(ps)})")
     tables = {}
     for t, c, ty, comment in cols:
         tables.setdefault(t, []).append((f"{q(c)} {ty}", comment))
     out = []
     for t, cs in tables.items():
+        items = cs + [(k, None) for k in extra.get(t, [])]
         if t in notes or any(comment for _, comment in cs):
-            out.append(f"{q(t)}" + (f"  -- {notes[t]}" if t in notes else "") + "\n(" +
-                       ",\n".join(f"  {c}" + (f"  -- {comment}" if comment else "") for c, comment in cs) + "\n)")
+            lines = [f"  {c}" + ("," if i < len(items) - 1 else "") + (f"  -- {comment}" if comment else "") for i, (c, comment) in enumerate(items)]
+            out.append(f"{q(t)}" + (f"  -- {notes[t]}" if t in notes else "") + "\n(\n" + "\n".join(lines) + "\n)")
         else:
-            out.append(f"{q(t)}({', '.join(c for c, _ in cs)})")
+            out.append(f"{q(t)}({', '.join(c for c, _ in items)})")
     return "\n".join(out)
 
 
@@ -131,6 +225,7 @@ def main():
     ap.add_argument("--db", help="only this db_id, e.g. financial")
     ap.add_argument("--difficulty", choices=["easy", "medium", "hard"])
     ap.add_argument("--timeout", type=int, default=60, help="seconds per query")
+    ap.add_argument("--keys", action="store_true", help="show each table's primary and foreign keys in the prompt")
     ap.add_argument("--label", default="", help="what this run is, shown on the report page")
     ap.add_argument("--keep-empty-gold", action="store_true",
                     help="also score questions whose gold answer is empty/zero (mostly broken gold SQL)")
@@ -152,7 +247,6 @@ def main():
     if not args.rerun and args.sample and args.sample < len(pairs):
         pairs = pairs.sample(args.sample, random_state=args.seed)
 
-    sqlite_path = {p.stem: p for p in (ROOT / "text2sql-db").rglob("*.sqlite")}
     schemas, pools = {}, {}
     # examples never share a question or a query template with anything being tested
     tested_q, tested_t = set(pairs.QUESTION.str.lower()), set(pairs.SQL_SQLITE.map(template))
@@ -176,14 +270,14 @@ def main():
         gold_sql, gold, pred = r.SQL_SQLITE, None, None
         try:
             gold_sql = repair_gold(r.SQL_SQLITE, r.DB_ID)
-            gold = sqlite_rows(real_file(str(sqlite_path[r.DB_ID].relative_to(ROOT))), gold_sql, args.timeout)
+            gold = sqlite_rows(sqlite_file(r.DB_ID), gold_sql, args.timeout)
             if compares_text_with_number(r.SQL_SQLITE, r.DB_ID):
                 out["GOLD_ERROR"] = "gold SQL compares STRFTIME text with a number"
             elif degenerate(gold) and not args.keep_empty_gold:
                 out["GOLD_ERROR"] = "empty/zero gold answer"
         except Exception as e:
             out["GOLD_ERROR"] = str(e)[:1000]
-        detail = dict(question=r.QUESTION, gold_sql=gold_sql, seconds=None)
+        detail = dict(question=r.QUESTION, gold_sql=gold_sql, seconds=None, lenient=False, gold_flag=None)
         details.append(detail)
         if out["GOLD_ERROR"] and not args.keep_empty_gold:
             results.append(out)
@@ -194,7 +288,7 @@ def main():
                 pred_sql = r.SQL_SNOWFLAKE
             else:
                 if schema not in schemas:
-                    schemas[schema] = schema_text(cur, D, schema)
+                    schemas[schema] = schema_text(cur, D, schema, keys=args.keys)
                 today = f"\nToday's date is {TODAY[r.DB_ID]}: use that literal date, not CURRENT_DATE." if r.DB_ID in TODAY else ""
                 if args.shots and schema not in pools:
                     pool = everything[(everything.DB_ID == r.DB_ID) & everything.SQL_SNOWFLAKE.notna()].drop_duplicates("QUESTION")
@@ -208,7 +302,20 @@ def main():
             cur.execute(f"use schema {D}.{q(schema)}")
             pred = cur.execute(pred_sql).fetchall()
             if out["GOLD_ERROR"] is None:
-                out["CORRECT"] = same_result(gold, pred, ordered="order by" in r.SQL_SQLITE.lower())
+                ordered = "order by" in r.SQL_SQLITE.lower()
+                out["CORRECT"] = same_result(gold, pred, ordered)
+                ties = gold_ties(sqlite_file(r.DB_ID), gold_sql, args.timeout) if "limit" in gold_sql.lower() else None
+                if ties:
+                    detail["gold_flag"] = TIE_NOTE.format(n=ties[0], tied=len(ties[2]))
+                    out["CORRECT"] = out["CORRECT"] or tie_ok(ties, pred, len(pred))
+                review = reviewed(r.DB_ID, r.QUESTION_ID)
+                if review:
+                    detail["gold_flag"] = "Gold disputed: " + review["issue"]
+                    strict, lenient = also_right(sqlite_file(r.DB_ID), review, pred, args.timeout)
+                    out["CORRECT"] = out["CORRECT"] or strict
+                    detail["lenient"] = detail["lenient"] or lenient
+                detail["lenient"] = detail["lenient"] or out["CORRECT"]
+                detail["lenient"] = out["CORRECT"] or contains_result(gold, pred, ordered)
         except Exception as e:
             out["PRED_ERROR"] = str(e)[:1000]
         detail.update(gold=None if gold is None else gold[:10], gold_n=None if gold is None else len(gold),
@@ -223,7 +330,9 @@ def main():
         question_id=int(o["QUESTION_ID"]), db_id=o["DB_ID"], difficulty=o["DIFFICULTY"], question=d["question"],
         gold_sql=d["gold_sql"], gold_answer=d.get("gold"), gold_rows=d.get("gold_n"), gold_error=o["GOLD_ERROR"],
         prompt=d.get("prompt"), pred_sql=o["PRED_SQL"], pred_answer=d.get("pred"), pred_rows=d.get("pred_n"),
-        pred_error=o["PRED_ERROR"], correct=bool(o["CORRECT"]), seconds=d["seconds"]) for o, d in zip(results, details)])
+        pred_error=o["PRED_ERROR"], correct=bool(o["CORRECT"]), lenient=bool(d["lenient"]), seconds=d["seconds"],
+        gold_flag=d["gold_flag"])
+        for o, d in zip(results, details)])
     res = pd.DataFrame(results)
     res = res.astype({c: "string" for c in res.columns if c not in ("QUESTION_ID", "CORRECT")})
     write_pandas(sf, res, "EVAL_RESULTS", database=D, schema="BENCHMARK", auto_create_table=True)

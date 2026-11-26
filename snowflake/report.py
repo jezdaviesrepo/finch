@@ -23,7 +23,7 @@ from multiprocessing import Pool
 
 import sqlglot
 
-from evaluate import degenerate, sqlite_rows, template
+from evaluate import contains_result, degenerate, sqlite_rows, template
 from history import PATH as HISTORY, connect as connect_history
 from load_finch import DATA, ROOT, compares_text_with_number, real_file, repair_gold, table_joins
 
@@ -129,6 +129,11 @@ def render_runs():
         run["results"] = [dict(x, gold=json.loads(x["gold_answer"] or "null"), pred=json.loads(x["pred_answer"] or "null"),
                                gold_sql=pretty(x["gold_sql"], "sqlite"), pred_sql=pretty(x["pred_sql"], "snowflake"))
                           for x in db.execute("select * from results where run_id = ? order by question_id", (r["run_id"],))]
+        run["lenient_from_sample"] = any(x["lenient"] is None for x in run["results"])
+        for x in run["results"]:
+            if x["lenient"] is None:  # runs before lenient scoring: judge on the stored first 10 rows
+                x["lenient"] = bool(x["correct"]) or (x["gold"] is not None and x["pred"] is not None and x["gold_rows"] == x["pred_rows"]
+                                                      and contains_result(x["gold"], x["pred"], "order by" in x["gold_sql"].lower()))
         runs.append(run)
     page = dict(runs=runs, pending=[c for c in changes if c["id"] > prev])
     html = pathlib.Path(__file__).with_name("runs_template.html").read_text()

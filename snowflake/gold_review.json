@@ -1,0 +1,20 @@
+{
+  "financial": {
+    "43": {
+      "issue": "The question asks for a district, but FINCH's gold SQL groups by region (A3) and returns 'south Moravia'. Also right: the district with the highest total of active loans ('Hl.m. Praha'), or the district with the single largest active loan ('Brno - mesto'), since 'highest active loan' can mean either.",
+      "also_right": [
+        "SELECT t2.a2 FROM account AS t1 INNER JOIN district AS t2 ON t1.district_id = t2.district_id INNER JOIN loan AS t3 ON t1.account_id = t3.account_id WHERE t3.status IN ('C', 'D') GROUP BY t2.a2 ORDER BY SUM(t3.amount) DESC LIMIT 1",
+        "SELECT t2.a2 FROM account AS t1 INNER JOIN district AS t2 ON t1.district_id = t2.district_id INNER JOIN loan AS t3 ON t1.account_id = t3.account_id WHERE t3.status IN ('C', 'D') ORDER BY t3.amount DESC LIMIT 1"
+      ]
+    }
+  },
+  "financial_disguised": {
+    "1000043": {
+      "issue": "The question asks for a district, but FINCH's gold SQL groups by region (X03) and returns 'south Moravia'. Also right: the district with the highest total of active loans ('Hl.m. Praha'), or the district with the single largest active loan ('Brno - mesto'), since 'highest active loan' can mean either.",
+      "also_right": [
+        "SELECT t2.X06 FROM account AS t1 INNER JOIN district AS t2 ON t1.district_id = t2.district_id INNER JOIN loan AS t3 ON t1.account_id = t3.account_id WHERE t3.status IN ('C', 'D') GROUP BY t2.X06 ORDER BY SUM(t3.amount) DESC LIMIT 1",
+        "SELECT t2.X06 FROM account AS t1 INNER JOIN district AS t2 ON t1.district_id = t2.district_id INNER JOIN loan AS t3 ON t1.account_id = t3.account_id WHERE t3.status IN ('C', 'D') ORDER BY t3.amount DESC LIMIT 1"
+      ]
+    }
+  }
+}

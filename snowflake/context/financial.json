@@ -1,4 +1,40 @@
 {
+  "ACCOUNT": {
+    "comment": "Bank accounts held at a Czech bank, 1993-1998: one row per account (4,500). Each account is held at a branch in a district and has a statement frequency. Money amounts in this database are in Czech crowns (CZK).",
+    "columns": {
+      "ACCOUNT_ID": "Identifier of the bank account.",
+      "DISTRICT_ID": "District of the bank branch where the account is held.",
+      "FREQUENCY": "How often account statements are issued. Exactly 3 values (Czech): 'POPLATEK MESICNE' = monthly issuance (4,167 accounts), 'POPLATEK TYDNE' = weekly issuance (240), 'POPLATEK PO OBRATU' = issuance after each transaction (93).",
+      "DATE": "Date the account was opened, as text 'YYYY-MM-DD', from 1993-01-01 to 1997-12-29."
+    }
+  },
+  "CARD": {
+    "comment": "Payment cards issued by the bank: one row per card (892). A card is issued to a person for a specific account they can use (a disposition).",
+    "columns": {
+      "CARD_ID": "Identifier of the card.",
+      "DISP_ID": "The disposition (person and account) the card was issued for.",
+      "TYPE": "Card type: 'junior' (145 cards), 'classic' (659) or 'gold' (88). Gold is the highest level, junior the lowest.",
+      "ISSUED": "Date the card was issued, as text 'YYYY-MM-DD', from 1993-11-07 to 1998-12-29."
+    }
+  },
+  "CLIENT": {
+    "comment": "Customers of the bank: one row per person (5,369).",
+    "columns": {
+      "CLIENT_ID": "Identifier of the client.",
+      "GENDER": "'M' = male (2,724), 'F' = female (2,645).",
+      "BIRTH_DATE": "Date of birth, as text 'YYYY-MM-DD', from 1911-08-20 to 1987-09-27.",
+      "DISTRICT_ID": "District where the client lives (their address), which can differ from the district of their account's branch."
+    }
+  },
+  "DISP": {
+    "comment": "Dispositions: who may use which account. One row per person-account pair (5,369). Every account has exactly one owner and may have further authorised users.",
+    "columns": {
+      "DISP_ID": "Identifier of the disposition (a person's right to use an account).",
+      "CLIENT_ID": "The person.",
+      "ACCOUNT_ID": "The account.",
+      "TYPE": "'OWNER' = the account holder (one per account, 4,500); 'DISPONENT' = another person authorised to use the account (869)."
+    }
+  },
   "DISTRICT": {
     "comment": "Demographic and economic statistics for each of the 77 districts (okresy) of the Czech Republic in the mid-1990s. A district is a local administrative area; districts are grouped into 8 regions.",
     "columns": {
@@ -18,6 +54,44 @@
       "A14": "Number of entrepreneurs per 1,000 inhabitants. 81 to 167.",
       "A15": "Number of crimes committed in the district in 1995 (a count, not a rate). 818 to 85,677. Unknown (NULL) for Jesenik.",
       "A16": "Number of crimes committed in the district in 1996 (a count, not a rate). 888 to 99,107."
+    }
+  },
+  "LOAN": {
+    "comment": "Loans granted to accounts: one row per loan (682); an account has at most one loan. Amounts in Czech crowns (CZK).",
+    "columns": {
+      "LOAN_ID": "Identifier of the loan.",
+      "ACCOUNT_ID": "The account the loan was granted to.",
+      "DATE": "Date the loan was granted (approved), as text 'YYYY-MM-DD', from 1993-07-05 to 1998-12-08.",
+      "AMOUNT": "Amount of the loan, CZK. 4,980 to 590,820.",
+      "DURATION": "Length of the loan in months: 12, 24, 36, 48 or 60.",
+      "PAYMENTS": "Monthly repayment amount, CZK (AMOUNT = PAYMENTS x DURATION). 304 to 9,910. Not a count of payments.",
+      "STATUS": "State of the loan. 'A' = contract finished, no problems (203); 'B' = contract finished, loan not paid back (31); 'C' = contract still running, payments OK so far (403); 'D' = contract still running, client in debt (45). Finished = A or B; running (active) = C or D; good = A or C; bad = B or D."
+    }
+  },
+  "ORDER": {
+    "comment": "Payment orders (standing orders): instructions to pay money regularly from an account to another account, possibly at another bank. One row per order (6,471). Amounts in Czech crowns (CZK).",
+    "columns": {
+      "ORDER_ID": "Identifier of the payment order.",
+      "ACCOUNT_ID": "The account the money is paid from.",
+      "BANK_TO": "Two-letter code of the recipient's bank, one of 13 codes such as 'AB', 'CD', 'YZ'.",
+      "ACCOUNT_TO": "The recipient's account number.",
+      "AMOUNT": "Amount paid by the order, CZK. 1 to 14,882.",
+      "K_SYMBOL": "Purpose of the payment (Czech): 'SIPO' = household payment (3,502 orders), 'UVER' = loan repayment (717), 'POJISTNE' = insurance payment (532), 'LEASING' = leasing payment (341); empty ('') = not specified (1,379)."
+    }
+  },
+  "TRANS": {
+    "comment": "Transactions on accounts: one row per movement of money (1,056,320), 1993-1998. Amounts and balances in Czech crowns (CZK).",
+    "columns": {
+      "TRANS_ID": "Identifier of the transaction.",
+      "ACCOUNT_ID": "The account the transaction is on.",
+      "DATE": "Date of the transaction, as text 'YYYY-MM-DD', from 1993-01-01 to 1998-12-31.",
+      "TYPE": "Direction (Czech): 'PRIJEM' = credit, money in (405,083); 'VYDAJ' = debit, money out (634,571); 'VYBER' = cash withdrawal, also money out (16,666). A withdrawal is VYDAJ or VYBER.",
+      "OPERATION": "How the money moved (Czech): 'VYBER' = withdrawal in cash (434,918); 'PREVOD NA UCET' = remittance (transfer) to another bank (208,283); 'VKLAD' = credit (deposit) in cash (156,743); 'PREVOD Z UCTU' = collection from another bank (65,226); 'VYBER KARTOU' = credit card withdrawal (8,036). NULL for interest credited by the bank (183,114).",
+      "AMOUNT": "Amount of money moved, CZK, always positive (0 to 87,400). Use TYPE for the direction.",
+      "BALANCE": "Account balance after the transaction, CZK. Can be negative (-41,126 to 209,637).",
+      "K_SYMBOL": "Purpose of the transaction (Czech): 'UROK' = interest credited (183,114); 'SLUZBY' = payment for the account statement (bank charge, 155,832); 'SIPO' = household payment (118,065); 'DUCHOD' = old-age pension (30,338); 'POJISTNE' = insurance payment (18,500); 'UVER' = loan repayment (13,580); 'SANKC. UROK' = penalty interest charged on a negative balance (1,577). Not specified: NULL (481,881) or a single space ' ' (53,433).",
+      "BANK": "Two-letter code of the partner's bank for transfers, one of 13 codes such as 'AB', 'YZ'. NULL when there is no partner bank (782,812 transactions).",
+      "ACCOUNT": "The partner's account number for transfers. NULL or 0 when there is no partner account."
     }
   }
 }

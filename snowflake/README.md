@@ -71,6 +71,34 @@ change; `evaluate.py` then shows them in the prompt (tables without descriptions
 .venv/bin/python snowflake/history.py note 6 "what this run showed"   # notes shown on the run's page
 ```
 
+## Scoring
+
+Each question gets two verdicts, both shown on the runs page (switch Strict / Lenient / Both):
+
+- **strict**: exactly the gold answer's columns and rows (FINCH's execution accuracy);
+- **lenient**: the gold answer's rows, with every gold column present; extra columns allowed.
+
+Two kinds of questionable gold answers are flagged and scored fairly:
+
+- **Gold arbitrary**: the gold SQL ends `ORDER BY ... LIMIT n` and the cut-off falls inside a tie between different
+  answers (detected automatically). Any of the tied answers, or all of them, counts as right.
+- **Gold disputed**: a person reviewed the gold answer and found it wrong. `gold_review.json` lists the issue and SQL
+  for the answers that also count as right; FINCH's own answer still counts.
+
+`--keys` adds each table's primary and foreign keys to the prompt.
+
+## Disguised copy
+
+`disguise.py` builds `financial_disguised`: `financial` with DISTRICT's columns A2..A16 renamed X01..X15 in a shuffled
+order, no descriptions, the same keys, and the gold SQL rewritten (checked to give identical answers). It tests models
+on names they can't have memorised.
+
+```bash
+.venv/bin/python snowflake/disguise.py --load        # build, check, load into Snowflake with its questions and keys
+.venv/bin/python snowflake/context.py financial_disguised
+.venv/bin/python snowflake/evaluate.py --model claude-opus-5-5 --db financial_disguised --sample 0 --keys --label "..."
+```
+
 ## Report
 
 ```bash

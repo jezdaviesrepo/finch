@@ -1,0 +1,97 @@
+{
+  "ACCOUNT": {
+    "comment": "Bank accounts held at a Czech retail bank in the 1990s: one row per account. Each account is held at a bank branch located in a district, and has a set frequency for issuing account statements. All money amounts in this database are in Czech crowns (CZK).",
+    "columns": {
+      "ACCOUNT_ID": "Identifier of the bank account.",
+      "DISTRICT_ID": "The district where the bank branch holding the account is located.",
+      "FREQUENCY": "How often account statements are issued, as a Czech code: 'POPLATEK MESICNE' = monthly issuance; 'POPLATEK TYDNE' = weekly issuance; 'POPLATEK PO OBRATU' = issuance after each transaction.",
+      "DATE": "Date the account was opened, as text in the form 'YYYY-MM-DD'."
+    }
+  },
+  "CARD": {
+    "comment": "Payment (credit) cards issued by the bank: one row per card. A card is issued to a person for a specific account that person is allowed to use.",
+    "columns": {
+      "CARD_ID": "Identifier of the card.",
+      "DISP_ID": "The person-and-account right (disposition) the card was issued for.",
+      "TYPE": "Card level: 'junior', 'classic' or 'gold'. Gold is the highest (premium) level, classic the standard level and junior the entry level.",
+      "ISSUED": "Date the card was issued, as text in the form 'YYYY-MM-DD'."
+    }
+  },
+  "CLIENT": {
+    "comment": "Customers of the bank: one row per person.",
+    "columns": {
+      "CLIENT_ID": "Identifier of the client.",
+      "GENDER": "'M' = male, 'F' = female.",
+      "BIRTH_DATE": "Date of birth, as text in the form 'YYYY-MM-DD'.",
+      "DISTRICT_ID": "The district where the client lives (their home address). This can differ from the district of the branch where their account is held."
+    }
+  },
+  "DISP": {
+    "comment": "Dispositions: which people have the right to use which accounts. One row per person-and-account pair. Every account has exactly one owner and may also have other people authorised to use it.",
+    "columns": {
+      "DISP_ID": "Identifier of the disposition (one person's right to use one account).",
+      "CLIENT_ID": "The person.",
+      "ACCOUNT_ID": "The account.",
+      "TYPE": "'OWNER' = the account holder, who owns the account; 'DISPONENT' = another person authorised to use the account but who does not own it."
+    }
+  },
+  "DISTRICT": {
+    "comment": "Demographic and economic statistics for each district (okres) of the Czech Republic in the mid-1990s: one row per district. A district is a local administrative area; districts are grouped into 8 regions. The statistics columns are named X01 to X15; their meanings are given below.",
+    "columns": {
+      "DISTRICT_ID": "Identifier of the district.",
+      "X01": "Number of municipalities in the district with 500 to 1,999 inhabitants.",
+      "X02": "Number of municipalities in the district with 2,000 to 9,999 inhabitants.",
+      "X03": "Region the district belongs to. One of 8 regions: 'Prague', 'central Bohemia', 'south Bohemia', 'west Bohemia', 'north Bohemia', 'east Bohemia', 'south Moravia', 'north Moravia'. Prague is a region of its own with a single district.",
+      "X04": "Number of crimes committed in the district in 1996 (a count, not a rate).",
+      "X05": "Average monthly salary in the district, in Czech crowns (CZK).",
+      "X06": "District name, written without Czech accents, e.g. 'Benesov', 'Kladno', 'Brno - mesto'. 'Hl.m. Praha' is the capital city, Prague.",
+      "X07": "Number of inhabitants (population) of the district.",
+      "X08": "Unemployment rate in 1996, as a percentage (e.g. 3.5 means 3.5%).",
+      "X09": "Number of municipalities in the district with 10,000 or more inhabitants.",
+      "X10": "Number of cities (towns) in the district.",
+      "X11": "Number of municipalities in the district with fewer than 500 inhabitants.",
+      "X12": "Unemployment rate in 1995, as a percentage (e.g. 3.5 means 3.5%). Unknown (NULL) for the district of Jesenik.",
+      "X13": "Number of crimes committed in the district in 1995 (a count, not a rate). Unknown (NULL) for the district of Jesenik.",
+      "X14": "Ratio of urban inhabitants: the percentage of the district's population living in towns.",
+      "X15": "Number of entrepreneurs per 1,000 inhabitants."
+    }
+  },
+  "LOAN": {
+    "comment": "Loans granted by the bank to accounts: one row per loan. An account has at most one loan. Amounts are in Czech crowns (CZK).",
+    "columns": {
+      "LOAN_ID": "Identifier of the loan.",
+      "ACCOUNT_ID": "The account the loan was granted to.",
+      "DATE": "Date the loan was granted (approved), as text in the form 'YYYY-MM-DD'.",
+      "AMOUNT": "Total amount of the loan, CZK.",
+      "DURATION": "Length of the loan in months: 12, 24, 36, 48 or 60.",
+      "PAYMENTS": "Monthly repayment amount, CZK (the loan AMOUNT equals PAYMENTS multiplied by DURATION). An amount of money, not a count of payments.",
+      "STATUS": "State of the loan, as a code: 'A' = contract finished, no problems; 'B' = contract finished, loan not paid back; 'C' = contract still running, payments OK so far; 'D' = contract still running, client in debt. Finished loans are A or B; running (active) loans are C or D; loans in good standing are A or C; problem loans are B or D."
+    }
+  },
+  "ORDER": {
+    "comment": "Payment orders (standing orders): instructions to pay money regularly from an account to a recipient's account, possibly at another bank. One row per order. Amounts are in Czech crowns (CZK).",
+    "columns": {
+      "ORDER_ID": "Identifier of the payment order.",
+      "ACCOUNT_ID": "The account the money is paid from.",
+      "BANK_TO": "Two-letter code of the recipient's bank, e.g. 'AB' or 'YZ'.",
+      "ACCOUNT_TO": "The recipient's account number.",
+      "AMOUNT": "Amount paid by the order, CZK.",
+      "K_SYMBOL": "Purpose of the payment, as a Czech code: 'SIPO' = household payment (e.g. utilities); 'UVER' = loan repayment; 'POJISTNE' = insurance payment; 'LEASING' = leasing payment. An empty value means the purpose is not specified."
+    }
+  },
+  "TRANS": {
+    "comment": "Transactions on bank accounts: one row per movement of money into or out of an account. Amounts and balances are in Czech crowns (CZK).",
+    "columns": {
+      "TRANS_ID": "Identifier of the transaction.",
+      "ACCOUNT_ID": "The account the transaction is on.",
+      "DATE": "Date of the transaction, as text in the form 'YYYY-MM-DD'.",
+      "TYPE": "Direction of the money, as a Czech code: 'PRIJEM' = credit (money in); 'VYDAJ' = debit (money out); 'VYBER' = cash withdrawal (also money out). A withdrawal is either VYDAJ or VYBER.",
+      "OPERATION": "How the money moved, as a Czech code: 'VYBER' = withdrawal in cash; 'VYBER KARTOU' = credit card withdrawal; 'VKLAD' = credit (deposit) in cash; 'PREVOD Z UCTU' = collection (incoming transfer) from another bank; 'PREVOD NA UCET' = remittance (outgoing transfer) to another bank. Empty (NULL) for interest credited by the bank.",
+      "AMOUNT": "Amount of money moved, CZK. Always positive; TYPE gives the direction.",
+      "BALANCE": "Account balance after the transaction, CZK. Can be negative (overdrawn).",
+      "K_SYMBOL": "Purpose of the transaction, as a Czech code: 'UROK' = interest credited; 'SANKC. UROK' = penalty interest charged on a negative balance; 'SLUZBY' = payment for the account statement (bank charge); 'SIPO' = household payment; 'DUCHOD' = old-age pension; 'POJISTNE' = insurance payment; 'UVER' = loan repayment. Not specified when empty (NULL) or a single space.",
+      "BANK": "Two-letter code of the other party's bank for transfers, e.g. 'AB' or 'YZ'. Empty (NULL) when there is no other bank.",
+      "ACCOUNT": "The other party's account number for transfers. Empty (NULL) or 0 when there is no other account."
+    }
+  }
+}

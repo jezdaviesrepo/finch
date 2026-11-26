@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>FINCH on Snowflake: model runs</title>
 <style>
-:root{color-scheme:light;--bg:#f3f7f6;--s:#fff;--ink:#14302a;--ink2:#52665f;--line:#d6e0dc;--soft:#e8f0ed;--pine:#0f5b4a;--correct:#2a78d6;--wrong:#eb6834;--error:#eda100;--skipped:#8b9a94}
+:root{color-scheme:light;--bg:#f3f7f6;--s:#fff;--ink:#14302a;--ink2:#52665f;--line:#d6e0dc;--soft:#e8f0ed;--pine:#0f5b4a;--correct:#2a78d6;--extra:#93c0ec;--wrong:#eb6834;--error:#eda100;--skipped:#8b9a94}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "Avenir Next","Segoe UI",system-ui,sans-serif}
 header{background:var(--s);border-bottom:1px solid var(--line)}.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
 .top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;padding:16px 0}.top strong{font-size:17px}.mut{color:var(--ink2)}
@@ -21,15 +21,19 @@ details.q{background:var(--s);border:1px solid var(--line);border-radius:8px;mar
 details.q[open]>summary{border-bottom:1px solid var(--soft)}.tag{font-size:13px;white-space:nowrap}.meta{font-size:13px;color:var(--ink2);white-space:nowrap}
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:12px 14px 14px}@media(max-width:760px){.cols{grid-template-columns:1fr}}
 .cols h3{font-size:14px;margin:0 0 4px;font-weight:600}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12.5px/1.5 ui-monospace,monospace;margin:4px 0 10px;background:var(--bg);padding:8px 10px;border-radius:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.chip::before{content:'';width:10px;height:10px;border-radius:50%;background:var(--c)}h1 .chip{font-size:15px;font-weight:600;vertical-align:middle;margin-left:12px;padding:3px 10px;border-radius:999px;background:color-mix(in srgb,var(--c) 12%,#fff);color:var(--c)}
+.score-sw{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:14px;padding-bottom:6px}[role=tablist]{align-items:center}
+.trow{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center;margin-top:6px}.segs{display:inline-flex;border:1px solid #b9c9c2;border-radius:8px;overflow:hidden}.seg{font:inherit;font-size:14px;border:0;background:var(--s);color:var(--ink2);padding:6px 14px;cursor:pointer}.seg+.seg{border-left:1px solid #b9c9c2}.seg[aria-pressed=true]{background:var(--pine);color:#fff}.trow .legend{margin:0}
+.flag{display:inline-block;font-size:12px;font-weight:600;color:#8a4b00;background:#fdf1dc;border:1px solid #f0d3a3;border-radius:999px;padding:0 8px;margin-left:4px;vertical-align:1px}.flagnote{margin:12px 14px 0;padding:8px 12px;background:#fdf6ea;border-left:3px solid #e0a54a;border-radius:4px;font-size:14px;max-width:none}
 .notes p{margin:0 0 12px}.notes code{font:13px ui-monospace,monospace;background:var(--soft);padding:1px 5px;border-radius:4px}.err{color:#9a3a12}.nw{white-space:nowrap}details.p summary{cursor:pointer;color:var(--pine)}main{padding-bottom:72px}[hidden]{display:none!important}
 [role=tablist]{display:flex;gap:4px;margin-top:2px}[role=tab]{font:inherit;font-weight:500;background:none;border:0;border-bottom:3px solid transparent;padding:8px 14px 9px;color:var(--ink2);cursor:pointer}[role=tab]:hover{color:var(--ink)}[role=tab][aria-selected=true]{color:var(--pine);border-color:var(--pine);font-weight:600}
 header .top{padding-bottom:0}#chart svg{display:block;width:100%;height:auto;background:var(--s);border:1px solid var(--line);border-radius:8px;margin-top:14px}#chart text{font:13px "Avenir Next","Segoe UI",system-ui,sans-serif;fill:var(--ink2)}#chart .v{font-weight:600;fill:var(--ink)}#chart .hit{fill:transparent;cursor:pointer}#chart .hit:hover,#chart .hit:focus-visible{fill:rgba(15,91,74,.06);outline:none}
 #tip{position:fixed;display:none;pointer-events:none;background:var(--ink);color:#fff;padding:7px 11px;border-radius:6px;font-size:13px;max-width:340px;z-index:9;white-space:pre-line}
 </style></head><body>
 <header><div class="wrap top"><strong>FINCH on Snowflake: model runs</strong></div>
-<div class="wrap" role="tablist" aria-label="Sections"><button role="tab" id="t-run" aria-controls="p-run">Run details</button><button role="tab" id="t-trend" aria-controls="p-trend">Accuracy by run</button></div></header>
+<div class="wrap" role="tablist" aria-label="Sections"><button role="tab" id="t-run" aria-controls="p-run">Run details</button><button role="tab" id="t-trend" aria-controls="p-trend">Accuracy by run</button><div class="score-sw"><span class="mut">Score</span><div class="segs" id="scoresw" role="group" aria-label="Scoring"></div></div></div></header>
 <main class="wrap">
-<section role="tabpanel" id="p-trend" aria-labelledby="t-trend"><h1 id="thead"></h1><p class="mut" id="tnote"></p><div class="legend" id="tlegend"></div><div id="chart"></div>
+<section role="tabpanel" id="p-trend" aria-labelledby="t-trend"><h1 id="thead"></h1><p class="mut" id="tnote"></p><div class="trow"><div class="segs" id="tmetric" role="group" aria-label="Measure"></div><div class="legend" id="tlegend"></div></div><div id="chart"></div>
 <h2>All runs</h2><div class="scroll"><table id="runs"></table></div></section>
 <section role="tabpanel" id="p-run" aria-labelledby="t-run">
 <div class="filters" style="margin-top:20px"><label>Run<select id="runpick"></select></label></div>
@@ -50,23 +54,28 @@ header .top{padding-bottom:0}#chart svg{display:block;width:100%;height:auto;bac
 <script type="application/json" id="data">__DATA__</script>
 <script>
 const D=JSON.parse(document.getElementById('data').textContent),RUNS=D.runs,$=i=>document.getElementById(i);
-const K={correct:'Correct',wrong:'Wrong answer',error:'SQL error',skipped:'Skipped (gold answer empty or broken)'};
+const K={correct:'Correct',extra:'Right, extra columns',wrong:'Wrong answer',error:'SQL error',skipped:'Skipped (gold answer empty or broken)'};
+let SCORE='both';const SC={strict:['Strict','exactly the gold answer’s columns and rows'],lenient:['Lenient','the gold answer’s columns and rows, extra columns allowed']};
+function modes(){return SCORE==='both'?['strict','lenient']:[SCORE]}function ok(r,m){return m==='strict'?!!r.correct:!!(r.correct||r.lenient)}
 const nf=n=>n.toLocaleString('en'),pc=(a,b)=>b?(100*a/b).toFixed(1)+'%':'–',el=(t,x,c)=>{const e=document.createElement(t);if(x!=null)e.textContent=x;if(c)e.className=c;return e};
-const kind=r=>r.gold_error?'skipped':r.pred_error?'error':r.correct?'correct':'wrong',joins=r=>(r.gold_sql.match(/\bjoin\b/gi)||[]).length;
+const kind=r=>r.gold_error?'skipped':r.pred_error?'error':r.correct?'correct':r.lenient?'extra':'wrong',joins=r=>(r.gold_sql.match(/\bjoin\b/gi)||[]).length;
 const rows=(x,n)=>x==null?'(none)':x.length?x.map(r=>r.join(' | ')).join('\n')+(n>x.length?`\n… ${nf(n-x.length)} more rows`:''):'(no rows)';
 function bar(host,c){host.replaceChildren();for(const k in K)if(c[k]){const i=el('i');i.style.cssText=`flex:${c[k]} 0 0;background:var(--${k})`;i.title=`${K[k]}: ${c[k]}`;host.append(i)}}
 function table(id,head,data){const t=$(id);t.replaceChildren();const h=el('tr');head.forEach(([x,c])=>h.append(el('th',x,c)));const a=el('thead'),b=el('tbody');a.append(h);data.forEach(r=>{const tr=el('tr');r.forEach((x,i)=>{const td=el('td',null,head[i][1]);td.append(x);tr.append(td)});b.append(tr)});t.append(a,b)}
-function group(R,f,order){const m={};for(const r of R){const k=f(r),o=m[k]||(m[k]={n:0});o.n++;o[kind(r)]=(o[kind(r)]||0)+1}
- return(order||Object.keys(m).sort((a,b)=>a-b)).filter(k=>m[k]).map(k=>{const o=m[k],s=o.n-(o.skipped||0),b=el('div',null,'bar');bar(b,o);return[String(k),nf(o.n),nf(o.correct||0),pc(o.correct||0,s),b]})}
+function group(R,f,order){const m={};for(const r of R){const k=f(r),o=m[k]||(m[k]={n:0,R:[]});o.n++;o.R.push(r);o[kind(r)]=(o[kind(r)]||0)+1}
+ return(order||Object.keys(m).sort((a,b)=>a-b)).filter(k=>m[k]).map(k=>{const o=m[k],S=o.R.filter(r=>!r.gold_error),b=el('div',null,'bar');bar(b,o);
+  return[String(k),nf(o.n),...modes().flatMap(md=>{const c=S.filter(r=>ok(r,md)).length;return[nf(c),pc(c,S.length)]}),b]})}
 function show(){const run=RUNS[+$('runpick').value],R=run.results,c={};R.forEach(r=>c[kind(r)]=(c[kind(r)]||0)+1);const scored=R.length-(c.skipped||0);
- $('title').textContent=`${run.name}: ${run.model} on ${[...new Set(R.map(r=>r.db_id))].join(', ')}`;$('label').textContent=run.label||'';
- $('pct').textContent=pc(c.correct||0,scored);$('frac').textContent=`${nf(c.correct||0)} of ${nf(scored)} questions answered correctly (execution accuracy)`;
+ $('title').replaceChildren(`${run.name} on ${[...new Set(R.map(r=>r.db_id))].join(', ')}`,chip(run.model));$('label').textContent=run.label||'';
+ const S=R.filter(r=>!r.gold_error),cnt=md=>S.filter(r=>ok(r,md)).length,M=modes();
+ $('pct').textContent=pc(cnt(M[0]),scored)+(M[1]?` / ${pc(cnt(M[1]),scored)}`:'');
+ $('frac').textContent=M.map(md=>`${SC[md][0]}: ${nf(cnt(md))} of ${nf(scored)} right (${SC[md][1]})`).join('. ')+(run.lenient_from_sample&&SCORE!=='strict'?'. Lenient judged on the first 10 rows of each answer (this run predates lenient scoring).':'');
  bar($('total'),c);$('legend').replaceChildren(...Object.keys(K).filter(k=>c[k]).map(k=>{const s=el('span'),w=el('i',null,'sw');w.style.background=`var(--${k})`;s.append(w,`${K[k]} ${nf(c[k])}`);return s}));
- const F=[['Model',run.model],['Run id',run.run_id],['Run at',run.at],['Time taken',run.seconds==null?'not recorded':`${dur(run.seconds)} for ${nf(R.length)} questions (${(run.seconds/R.length).toFixed(1)}s each on average)`],['Examples in prompt',run.shots?`${run.shots} similar questions`:'None'],['Questions',`${nf(R.length)} (${nf(c.skipped||0)} skipped)`],['Scoring','Same rows as the gold answer, in any order unless the gold SQL has ORDER BY; numbers to about 5 significant figures']];
+ const F=[['Model',run.model],['Run id',run.run_id],['Run at',run.at],['Time taken',run.seconds==null?'not recorded':`${dur(run.seconds)} for ${nf(R.length)} questions (${(run.seconds/R.length).toFixed(1)}s each on average)`],['Examples in prompt',run.shots?`${run.shots} similar questions`:'None'],['Questions',`${nf(R.length)} (${nf(c.skipped||0)} skipped)`],['Scoring','Same rows as the gold answer, in any order unless the gold SQL has ORDER BY; numbers to about 5 significant figures. Where FINCH’s gold answer is an arbitrary pick from a tie (ORDER BY … LIMIT), any of the tied answers counts as right; those questions are flagged “Gold arbitrary”. Where a person reviewed FINCH’s gold answer and found it wrong (snowflake/gold_review.json), the reviewed answers also count as right; those are flagged “Gold disputed”.']];
  $('facts').replaceChildren(...F.flatMap(([a,b])=>[el('dt',a),el('dd',b)]));const first=R.find(r=>r.prompt);$('showprompt').disabled=!first;$('showprompt').onclick=()=>prompt(run,first);changes(run);notes(run);
- const H=n=>[[n],['Questions','n'],['Correct','n'],['Accuracy','n'],['Split']];
+ const H=n=>[[n],['Questions','n'],...modes().flatMap(md=>[[`Right (${SC[md][0].toLowerCase()})`,'n'],[`Accuracy (${SC[md][0].toLowerCase()})`,'n']]),['Split']];
  table('bydiff',H('Difficulty'),group(R,r=>r.difficulty,['easy','medium','hard']));table('byjoin',H('Joins'),group(R,joins));
- $('fres').replaceChildren(el('option','All results'),...Object.keys(K).filter(k=>c[k]).map(k=>{const o=el('option',`${K[k]} (${c[k]})`);o.value=k;return o}));$('fres').options[0].value='';list()}
+ const nflag=R.filter(r=>r.gold_flag).length;$('fres').replaceChildren(el('option','All results'),...Object.keys(K).filter(k=>c[k]).map(k=>{const o=el('option',`${K[k]} (${c[k]})`);o.value=k;return o}),...(nflag?[(()=>{const o=el('option',`Gold answer flagged (${nflag})`);o.value='flag';return o})()]:[]));$('fres').options[0].value='';list()}
 function changes(run){const last=+$('runpick').value===RUNS.length-1,C=run.changes;$('chead').textContent=run.run_no===1?'Database state for this run':`Changes to the database since Run ${run.run_no-1}`;
  $('cnote').textContent=(run.run_no===1?'Everything done to the Snowflake database before this first run.':C.length?'':'None: same database as the previous run.')+(last&&D.pending.length?` ${many(D.pending.length,'change')} made since this run ${D.pending.length===1?'is':'are'} not yet tested by any run: see the end of this list.`:'');
  const rowsOf=(L,tag)=>L.map(c=>[c.at,c.db_id||'all',c.kind,tag?`${c.description} (${tag})`:c.description]);
@@ -77,39 +86,42 @@ function prompt(run,r){$('ptitle').textContent=`${run.name}: prompt sent to ${ru
 $('pclose').onclick=()=>$('pdlg').close();$('pdlg').onclick=e=>{if(e.target===$('pdlg'))$('pdlg').close()};
 const many=(n,w)=>`${nf(n)} ${w}${n===1?'':'s'}`;
 function list(){const R=RUNS[+$('runpick').value].results,f=$('fres').value,s=$('fq').value.trim().toLowerCase(),host=$('list');host.replaceChildren();
- const L=R.filter(r=>(!f||kind(r)===f)&&(!s||(r.question+' '+r.gold_sql+' '+(r.pred_sql||'')).toLowerCase().includes(s)));$('shown').textContent=`Showing ${nf(L.length)} of ${nf(R.length)}.`;
+ const L=R.filter(r=>(!f||(f==='flag'?!!r.gold_flag:kind(r)===f))&&(!s||(r.question+' '+r.gold_sql+' '+(r.pred_sql||'')).toLowerCase().includes(s)));$('shown').textContent=`Showing ${nf(L.length)} of ${nf(R.length)}.`;
  for(const r of L){const d=el('details',null,'q'),sm=el('summary'),k=kind(r),t=el('span',null,'tag'),w=el('i',null,'sw');w.style.background=`var(--${k})`;t.append(w,K[k].split(' (')[0]);
-  sm.append(t,el('span',r.question),el('span',`${r.difficulty} · ${joins(r)} join${joins(r)===1?'':'s'}${r.seconds!=null?' · '+dur(r.seconds):''}`,'meta'));d.append(sm);
+  const qs=el('span',r.question);if(r.gold_flag)qs.append(' ',el('span',r.gold_flag.startsWith('Gold disputed')?'Gold disputed':'Gold arbitrary','flag'));sm.append(t,qs,el('span',`${r.difficulty} · ${joins(r)} join${joins(r)===1?'':'s'}${r.seconds!=null?' · '+dur(r.seconds):''}`,'meta'));d.append(sm);
   d.addEventListener('toggle',()=>{if(!d.open||d.children.length>1)return;const g=el('div'),m=el('div'),cols=el('div',null,'cols');
    g.append(el('h3','Gold SQL (FINCH, on SQLite)'),el('pre',r.gold_sql),el('h3',`Gold answer${r.gold_rows!=null?` (${nf(r.gold_rows)} rows)`:''}`),el('pre',r.gold_error||rows(r.gold,r.gold_rows)));
    m.append(el('h3',`${RUNS[+$('runpick').value].model} SQL (on Snowflake)`),el('pre',r.pred_sql||'(none)'),el('h3',r.pred_error?'Error':`Model answer${r.pred_rows!=null?` (${nf(r.pred_rows)} rows)`:''}`),el('pre',r.pred_error||rows(r.pred,r.pred_rows),r.pred_error?'err':null));
-   const pb=el('button','View the prompt','btn sm');pb.type='button';pb.disabled=!r.prompt;pb.onclick=()=>prompt(RUNS[+$('runpick').value],r);m.append(pb);cols.append(g,m);d.append(cols)});host.append(d)}}
-RUNS.forEach((r,i)=>{const o=el('option',`${r.name}${r.label?': '+r.label.split('.')[0]:''}`);o.value=i;$('runpick').append(o)});$('runpick').value=0;
+   const pb=el('button','View the prompt','btn sm');pb.type='button';pb.disabled=!r.prompt;pb.onclick=()=>prompt(RUNS[+$('runpick').value],r);m.append(pb);cols.append(g,m);if(r.gold_flag)d.append(el('p',r.gold_flag,'flagnote'));d.append(cols)});host.append(d)}}
+RUNS.forEach((r,i)=>{const o=el('option',`${r.name} (${mname(r.model)})${r.label?': '+r.label.split('.')[0]:''}`);o.value=i;$('runpick').append(o)});$('runpick').value=0;
 function tip(n,text){const go=e=>{const b=n.getBoundingClientRect(),t=$('tip');t.textContent=text;t.style.display='block';t.style.left=Math.max(8,Math.min((e.clientX||b.left)+12,innerWidth-t.offsetWidth-8))+'px';t.style.top=Math.min((e.clientY||b.bottom)+14,innerHeight-t.offsetHeight-8)+'px'};n.addEventListener('pointermove',go);n.addEventListener('focus',go);for(const x of['pointerleave','blur'])n.addEventListener(x,()=>$('tip').style.display='none')}
-const SER=[['overall','Overall','var(--pine)',3],['easy','Easy','#8db4e6',2],['medium','Medium','#3b78c9',2],['hard','Hard','#173f78',2]];
-function acc(run){const o={};for(const[k]of SER){const R=run.results.filter(r=>!r.gold_error&&(k==='overall'||r.difficulty===k));o[k]=R.length?{a:R.filter(r=>r.correct).length/R.length,c:R.filter(r=>r.correct).length,n:R.length}:null}return o}
-function trend(){const n=RUNS.length,A=RUNS.map(acc),best=Math.max(...A.map(a=>a.overall?a.overall.a:0)),f=v=>v?`${(100*v.a).toFixed(1)}%`:'–';
- $('thead').textContent=n===1?`One run so far: ${f(A[0].overall)}`:`${n} runs, best ${(100*best).toFixed(1)}%`;
- $('tnote').textContent='Accuracy is the share of scored questions answered correctly, overall and by difficulty. Compare runs on the same questions: check the database and question count in the table below. Click a run to open it.'+(n===1?' Later runs will join these lines.':'');
- $('tlegend').replaceChildren(...SER.map(([k,l,c,w])=>{const s=el('span'),i=el('i',null,'ln');i.style.cssText=`background:${c};height:${w+1}px`;s.append(i,l);return s}));
- const W=1100,H=360,L=56,Rt=150,T=30,B=46,x=i=>n===1?L+(W-L-Rt)/2:L+(W-L-Rt)*i/(n-1),y=a=>T+(H-T-B)*(1-a),ns='http://www.w3.org/2000/svg',mk=(t,at,txt)=>{const e=document.createElementNS(ns,t);for(const k in at)e.setAttribute(k,at[k]);if(txt!=null)e.textContent=txt;return e};
- const svg=mk('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'Accuracy by run. '+RUNS.map((r,i)=>`${r.name}: `+SER.map(([k,l])=>`${l} ${f(A[i][k])}`).join(', ')).join('. ')});
- for(const g of[0,.25,.5,.75,1])svg.append(mk('line',{x1:L,x2:W-Rt+20,y1:y(g),y2:y(g),stroke:g?'#e3ebe8':'#b9c9c2','stroke-width':1}),mk('text',{x:L-10,y:y(g)+4,'text-anchor':'end'},`${g*100}%`));
+const SER=[['overall','Overall'],['easy','Easy'],['medium','Medium'],['hard','Hard']];
+function model(m){return{'claude-opus-5-5':['Opus 5.5','#16866a'],'claude-sonnet-4-5':['Sonnet 4.5','#9152d0']}[m]||[m,'#5b6b66']}function mname(m){return model(m)[0]}function mcol(m){return model(m)[1]}
+function chip(m){const s=el('span',mname(m),'chip');s.style.setProperty('--c',mcol(m));return s}
+function acc(run,md){const o={};for(const[k]of SER){const R=run.results.filter(r=>!r.gold_error&&(k==='overall'||r.difficulty===k)),c=R.filter(r=>ok(r,md)).length;o[k]=R.length?{a:c/R.length,c,n:R.length}:null}return o}
+let metric='overall';
+function trend(){const n=RUNS.length,M=modes(),AM={strict:RUNS.map(r=>acc(r,'strict')),lenient:RUNS.map(r=>acc(r,'lenient'))},A=AM[M[0]],f=v=>v?`${(100*v.a).toFixed(1)}%`:'–',models=[...new Set(RUNS.map(r=>r.model))];
+ const best=m=>Math.max(...RUNS.map((r,i)=>r.model===m&&A[i].overall?A[i].overall.a:0));
+ $('thead').textContent=`${n} run${n===1?'':'s'}: `+models.map(m=>`${mname(m)} best ${(100*best(m)).toFixed(1)}%`).join(', ')+(M[1]?' (strict)':` (${SC[M[0]][0].toLowerCase()})`);
+ $('tnote').textContent=M.map(md=>`${SC[md][0]}: ${SC[md][1]}.`).join(' ')+(M[1]?' Solid lines are strict, dashed lines lenient.':'')+' Each colour is one model; its line joins that model’s runs. Compare runs on the same questions: check the database and question count in the table below. Click a run to open it.';
+ $('tmetric').replaceChildren(...SER.map(([k,l])=>{const b=el('button',l,'seg');b.type='button';b.setAttribute('aria-pressed',k===metric);b.onclick=()=>{metric=k;trend()};return b}));
+ $('tlegend').replaceChildren(...models.map(m=>{const s=el('span'),i=el('i',null,'ln');i.style.cssText=`background:${mcol(m)};height:3px`;s.append(i,mname(m));return s}),...(M[1]?[['strict','solid'],['lenient','dashed']].map(([md,st])=>{const s=el('span'),i=el('i',null,'ln');i.style.cssText=`height:0;border-top:3px ${st} #52665f;background:none`;s.append(i,SC[md][0]);return s}):[]));
+ const W=1100,H=360,L=56,Rt=40,T=34,B=46,pad=34,x=i=>n===1?L+(W-L-Rt)/2:L+pad+(W-L-Rt-2*pad)*i/(n-1),y=a=>T+(H-T-B)*(1-a),ns='http://www.w3.org/2000/svg',mk=(t,at,txt)=>{const e=document.createElementNS(ns,t);for(const k in at)e.setAttribute(k,at[k]);if(txt!=null)e.textContent=txt;return e};
+ const svg=mk('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':`${SER.find(s=>s[0]===metric)[1]} accuracy by run. `+RUNS.map((r,i)=>`${r.name} ${mname(r.model)} ${f(A[i][metric])}`).join(', ')});
+ for(const g of[0,.25,.5,.75,1])svg.append(mk('line',{x1:L,x2:W-Rt,y1:y(g),y2:y(g),stroke:g?'#e3ebe8':'#b9c9c2','stroke-width':1}),mk('text',{x:L-10,y:y(g)+4,'text-anchor':'end'},`${g*100}%`));
  RUNS.forEach((r,i)=>svg.append(mk('text',{x:x(i),y:H-B+24,'text-anchor':'middle'},r.name)));
- for(const[k,,c,w]of SER.slice().reverse()){const P=A.map((a,i)=>a[k]&&[x(i),y(a[k].a)]).filter(Boolean);
-  if(P.length>1)svg.append(mk('polyline',{points:P.map(p=>p.join(',')).join(' '),fill:'none',stroke:c,'stroke-width':w,'stroke-linejoin':'round','stroke-dasharray':k==='overall'?'':'6 5'}));
-  P.forEach(([px,py])=>svg.append(mk('circle',{cx:px,cy:py,r:k==='overall'?6:4.5,fill:c,stroke:'#fff','stroke-width':2})))}
- // end labels: the last run's value per line, nudged apart so they never overlap
- const last=A[n-1],lab=SER.filter(([k])=>last[k]).map(([k,l,c])=>({l,c,v:last[k],y:y(last[k].a)})).sort((p,q)=>p.y-q.y);
- for(let i=1;i<lab.length;i++)lab[i].y=Math.max(lab[i].y,lab[i-1].y+17);
- lab.forEach(o=>svg.append(mk('text',{x:x(n-1)+14,y:o.y+4,class:o.l==='Overall'?'v':''},`${o.l} ${f(o.v)}`)));
- RUNS.forEach((r,i)=>{const w=n===1?120:Math.min(120,(W-L-Rt)/(n-1)),h=mk('rect',{x:x(i)-w/2,y:T-10,width:w,height:H-T-B+20,class:'hit',tabindex:0,role:'button','aria-label':`Open ${r.name}`});
-  tip(h,`${r.name}: ${r.label||''}\n${r.model}${r.seconds!=null?', took '+dur(r.seconds):''}\n`+SER.map(([k,l])=>`${l}: ${f(A[i][k])}${A[i][k]?` (${A[i][k].c} of ${A[i][k].n})`:''}`).join('\n'));
+ for(const md of M)for(const m of models){const P=RUNS.map((r,i)=>r.model===m&&AM[md][i][metric]&&[x(i),y(AM[md][i][metric].a)]).filter(Boolean);
+  if(P.length>1)svg.append(mk('polyline',{points:P.map(p=>p.join(',')).join(' '),fill:'none',stroke:mcol(m),'stroke-width':2.5,'stroke-linejoin':'round','stroke-dasharray':md==='lenient'&&M[1]?'7 6':''}))}
+ RUNS.forEach((r,i)=>M.forEach(md=>{const v=AM[md][i][metric];if(!v)return;const px=x(i),py=y(v.a),hollow=md==='lenient'&&M[1],below=M[1]&&md==='strict';
+  svg.append(mk('circle',{cx:px,cy:py,r:hollow?4.5:6,fill:hollow?'#fff':mcol(r.model),stroke:hollow?mcol(r.model):'#fff','stroke-width':2}),mk('text',{x:px,y:below?py+22:py-13,'text-anchor':'middle',class:below?'':'v'},f(v)))}));
+ RUNS.forEach((r,i)=>{const w=n===1?120:Math.min(120,(W-L-Rt-2*pad)/(n-1)),h=mk('rect',{x:x(i)-w/2,y:T-14,width:w,height:H-T-B+24,class:'hit',tabindex:0,role:'button','aria-label':`Open ${r.name}`});
+  tip(h,`${r.name}: ${mname(r.model)}${r.seconds!=null?', took '+dur(r.seconds):''}\n${r.label||''}\n`+SER.map(([k,l])=>`${l}: `+M.map(md=>`${M[1]?SC[md][0].toLowerCase()+' ':''}${f(AM[md][i][k])}${AM[md][i][k]?` (${AM[md][i][k].c} of ${AM[md][i][k].n})`:''}`).join(', ')).join('\n'));
   const open=()=>{$('runpick').value=i;show();go('run');scrollTo(0,0)};h.onclick=open;h.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open()}};svg.append(h)});
  $('chart').replaceChildren(svg);
  table('runs',[['Run','nw'],['When','nw'],['Model','nw'],['Database'],['Label'],['Questions','n'],['Overall','n'],['Easy','n'],['Medium','n'],['Hard','n'],['Time','n'],['DB changes','n'],['Prompt']],
-  RUNS.map((r,i)=>[r.name,r.at,r.model,r.db_filter||'all',r.label||'',nf(A[i].overall?A[i].overall.n:0),...SER.map(([k])=>f(A[i][k])),r.seconds==null?'–':dur(r.seconds),nf(r.changes.length),(()=>{const b=el('button','View','btn sm'),f=r.results.find(x=>x.prompt);b.type='button';b.disabled=!f;b.onclick=()=>prompt(r,f);return b})()]))}
+  RUNS.map((r,i)=>[r.name,r.at,chip(r.model),r.db_filter||'all',r.label||'',nf(A[i].overall?A[i].overall.n:0),...SER.map(([k])=>M.map(md=>f(AM[md][i][k])).join(' / ')),r.seconds==null?'–':dur(r.seconds),nf(r.changes.length),(()=>{const b=el('button','View','btn sm'),fp=r.results.find(x=>x.prompt);b.type='button';b.disabled=!fp;b.onclick=()=>prompt(r,fp);return b})()]))}
+function scoresw(){$('scoresw').replaceChildren(...[['strict','Strict'],['lenient','Lenient'],['both','Both']].map(([k,l])=>{const b=el('button',l,'seg');b.type='button';b.setAttribute('aria-pressed',k===SCORE);b.onclick=()=>{SCORE=k;scoresw();show();trend()};return b}))}
 const tabs=['run','trend'];function go(t){tabs.forEach(k=>{const on=k===t,b=$('t-'+k);b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1;$('p-'+k).hidden=!on});history.replaceState(null,'','#'+t)}
 tabs.forEach((k,i)=>{const b=$('t-'+k);b.onclick=()=>go(k);b.onkeydown=e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){const n=tabs[(i+(e.key==='ArrowRight'?1:tabs.length-1))%tabs.length];go(n);$('t-'+n).focus()}}});
-$('runpick').onchange=show;$('fres').onchange=list;$('fq').oninput=list;show();trend();go(location.hash==='#trend'?'trend':'run');
+$('runpick').onchange=show;$('fres').onchange=list;$('fq').oninput=list;scoresw();show();trend();go(location.hash==='#trend'?'trend':'run');
 </script></body></html>

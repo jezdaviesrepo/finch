@@ -48,6 +48,12 @@ def real_file(rel):
     return dst
 
 
+def sqlite_file(db_id):
+    """Local SQLite file for a database: FINCH's own, or a disguised copy built by disguise.py (data/disguised/)."""
+    own = next((ROOT / "text2sql-db").rglob(f"{db_id}.sqlite"), None)
+    return real_file(str(own.relative_to(ROOT))) if own else DATA / "disguised" / f"{db_id}.sqlite"
+
+
 def q(name):
     return '"' + name.upper().replace('"', '""') + '"'
 

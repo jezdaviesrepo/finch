@@ -2,7 +2,9 @@
 
   changes  one row per change to the Snowflake database (load, keys, types, comments, ...)
   runs     one row per model run, with LAST_CHANGE = the newest change it ran against
-  results  one row per question per run: both SQL queries, both answers (first 10 rows) and the verdict
+  results  one row per question per run: both SQL queries, both answers (first 10 rows), the strict verdict
+           (CORRECT: exactly the gold answer) and the lenient one (LENIENT: extra columns allowed), and GOLD_FLAG
+           when FINCH's gold answer is itself questionable (e.g. an arbitrary pick from a tie)
 
 So "what changed between run 1 and run 2" is: changes with run1.last_change < id <= run2.last_change.
 Each run can carry NOTES explaining its result: python snowflake/history.py note RUN_NO "text" (blank line = new paragraph).
@@ -25,17 +27,19 @@ create table if not exists results (
     run_id text references runs(run_id), question_id integer, db_id text, difficulty text, question text,
     gold_sql text, gold_answer text, gold_rows integer, gold_error text,
     prompt text, pred_sql text, pred_answer text, pred_rows integer, pred_error text, correct integer, seconds real,
+    lenient integer, gold_flag text,
     primary key (run_id, question_id));
 """
 RESULT_COLS = ["question_id", "db_id", "difficulty", "question", "gold_sql", "gold_answer", "gold_rows", "gold_error",
-               "prompt", "pred_sql", "pred_answer", "pred_rows", "pred_error", "correct", "seconds"]
+               "prompt", "pred_sql", "pred_answer", "pred_rows", "pred_error", "correct", "seconds", "lenient", "gold_flag"]
 
 
 def connect():
     PATH.parent.mkdir(exist_ok=True)
     db = sqlite3.connect(PATH)
     db.executescript(SCHEMA)
-    for table, col, kind in (("runs", "seconds", "real"), ("results", "seconds", "real"), ("runs", "notes", "text")):
+    for table, col, kind in (("runs", "seconds", "real"), ("results", "seconds", "real"), ("runs", "notes", "text"),
+                             ("results", "lenient", "integer"), ("results", "gold_flag", "text")):
         if col not in [r[1] for r in db.execute(f"pragma table_info({table})")]:  # databases made before the column
             db.execute(f"alter table {table} add column {col} {kind}")
     return db
