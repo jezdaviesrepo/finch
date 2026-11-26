@@ -6,6 +6,20 @@
         "SELECT t2.a2 FROM account AS t1 INNER JOIN district AS t2 ON t1.district_id = t2.district_id INNER JOIN loan AS t3 ON t1.account_id = t3.account_id WHERE t3.status IN ('C', 'D') GROUP BY t2.a2 ORDER BY SUM(t3.amount) DESC LIMIT 1",
         "SELECT t2.a2 FROM account AS t1 INNER JOIN district AS t2 ON t1.district_id = t2.district_id INNER JOIN loan AS t3 ON t1.account_id = t3.account_id WHERE t3.status IN ('C', 'D') ORDER BY t3.amount DESC LIMIT 1"
       ]
+    },
+    "21": {
+      "issue": "The question asks about accounts opened at the Jesenik branch, but FINCH's gold SQL counts women who live in Jesenik (CLIENT.DISTRICT_ID, giving 26). Also right: women with an account held at the Jesenik branch (ACCOUNT.DISTRICT_ID), counting everyone on the account (25) or only account owners (22).",
+      "also_right": [
+        "SELECT COUNT(DISTINCT c.client_id) FROM client AS c INNER JOIN disp AS d ON d.client_id = c.client_id INNER JOIN account AS a ON a.account_id = d.account_id INNER JOIN district AS di ON di.district_id = a.district_id WHERE c.gender = 'F' AND di.a2 = 'Jesenik'",
+        "SELECT COUNT(DISTINCT c.client_id) FROM client AS c INNER JOIN disp AS d ON d.client_id = c.client_id INNER JOIN account AS a ON a.account_id = d.account_id INNER JOIN district AS di ON di.district_id = a.district_id WHERE c.gender = 'F' AND di.a2 = 'Jesenik' AND d.type = 'OWNER'"
+      ]
+    },
+    "22": {
+      "issue": "Wrong date in FINCH's gold SQL: the question asks about the 5100 transaction on 1998/9/2, but the gold SQL looks at 1997-08-20 and returns disposition 2231. On 1998-09-02 there are four 5100 transactions, with dispositions 1719, 4474, 4942 and 5393. The corrected answer replaces FINCH's.",
+      "replaces_gold": true,
+      "also_right": [
+        "SELECT t1.disp_id FROM disp AS t1 INNER JOIN account AS t2 ON t1.account_id = t2.account_id INNER JOIN trans AS t3 ON t2.account_id = t3.account_id WHERE t3.date = '1998-09-02' AND t3.amount = 5100"
+      ]
     }
   },
   "financial_disguised": {
@@ -14,6 +28,20 @@
       "also_right": [
         "SELECT t2.X06 FROM account AS t1 INNER JOIN district AS t2 ON t1.district_id = t2.district_id INNER JOIN loan AS t3 ON t1.account_id = t3.account_id WHERE t3.status IN ('C', 'D') GROUP BY t2.X06 ORDER BY SUM(t3.amount) DESC LIMIT 1",
         "SELECT t2.X06 FROM account AS t1 INNER JOIN district AS t2 ON t1.district_id = t2.district_id INNER JOIN loan AS t3 ON t1.account_id = t3.account_id WHERE t3.status IN ('C', 'D') ORDER BY t3.amount DESC LIMIT 1"
+      ]
+    },
+    "1000021": {
+      "issue": "The question asks about accounts opened at the Jesenik branch, but FINCH's gold SQL counts women who live in Jesenik (CLIENT.DISTRICT_ID, giving 26). Also right: women with an account held at the Jesenik branch (ACCOUNT.DISTRICT_ID), counting everyone on the account (25) or only account owners (22).",
+      "also_right": [
+        "SELECT COUNT(DISTINCT c.client_id) FROM client AS c INNER JOIN disp AS d ON d.client_id = c.client_id INNER JOIN account AS a ON a.account_id = d.account_id INNER JOIN district AS di ON di.district_id = a.district_id WHERE c.gender = 'F' AND di.X06 = 'Jesenik'",
+        "SELECT COUNT(DISTINCT c.client_id) FROM client AS c INNER JOIN disp AS d ON d.client_id = c.client_id INNER JOIN account AS a ON a.account_id = d.account_id INNER JOIN district AS di ON di.district_id = a.district_id WHERE c.gender = 'F' AND di.X06 = 'Jesenik' AND d.type = 'OWNER'"
+      ]
+    },
+    "1000022": {
+      "issue": "Wrong date in FINCH's gold SQL: the question asks about the 5100 transaction on 1998/9/2, but the gold SQL looks at 1997-08-20 and returns disposition 2231. On 1998-09-02 there are four 5100 transactions, with dispositions 1719, 4474, 4942 and 5393. The corrected answer replaces FINCH's.",
+      "replaces_gold": true,
+      "also_right": [
+        "SELECT t1.disp_id FROM disp AS t1 INNER JOIN account AS t2 ON t1.account_id = t2.account_id INNER JOIN trans AS t3 ON t2.account_id = t3.account_id WHERE t3.date = '1998-09-02' AND t3.amount = 5100"
       ]
     }
   }

@@ -119,7 +119,8 @@ REVIEW = json.loads(pathlib.Path(__file__).with_name("gold_review.json").read_te
 
 
 def reviewed(db_id, question_id):
-    """{'issue': why the gold is disputed, 'also_right': [SQL whose answer also counts as right]} or None."""
+    """{'issue': why the gold is disputed, 'also_right': [SQL whose answer also counts as right],
+    'replaces_gold': true when FINCH's own answer is plainly wrong and no longer counts} or None."""
     return REVIEW.get(db_id, {}).get(str(question_id))
 
 
@@ -310,10 +311,13 @@ def main():
                     out["CORRECT"] = out["CORRECT"] or tie_ok(ties, pred, len(pred))
                 review = reviewed(r.DB_ID, r.QUESTION_ID)
                 if review:
-                    detail["gold_flag"] = "Gold disputed: " + review["issue"]
+                    detail["gold_flag"] = ("Gold corrected: " if review.get("replaces_gold") else "Gold disputed: ") + review["issue"]
                     strict, lenient = also_right(sqlite_file(r.DB_ID), review, pred, args.timeout)
-                    out["CORRECT"] = out["CORRECT"] or strict
-                    detail["lenient"] = detail["lenient"] or lenient
+                    if review.get("replaces_gold"):
+                        out["CORRECT"], detail["lenient"] = strict, lenient
+                    else:
+                        out["CORRECT"] = out["CORRECT"] or strict
+                        detail["lenient"] = detail["lenient"] or lenient
                 detail["lenient"] = detail["lenient"] or out["CORRECT"]
                 detail["lenient"] = out["CORRECT"] or contains_result(gold, pred, ordered)
         except Exception as e:

@@ -84,6 +84,10 @@ Two kinds of questionable gold answers are flagged and scored fairly:
   answers (detected automatically). Any of the tied answers, or all of them, counts as right.
 - **Gold disputed**: a person reviewed the gold answer and found it wrong. `gold_review.json` lists the issue and SQL
   for the answers that also count as right; FINCH's own answer still counts.
+- **Gold corrected**: a `gold_review.json` entry with `"replaces_gold": true`, for gold answers that are plainly wrong
+  (e.g. the wrong date); only the corrected answer counts.
+
+After editing `gold_review.json`, re-score the stored runs: `python snowflake/rescore.py && python snowflake/report.py --runs`.
 
 `--keys` adds each table's primary and foreign keys to the prompt.
 
