@@ -38,6 +38,25 @@ significant figures. Questions whose gold answer is empty, null or zero are skip
 evaluates as always true or always false (1,643 `accounting` questions, 21 elsewhere). `--shots` adds similar question/SQL pairs from the same
 database, never ones sharing a question or query template with the questions under test. Narrow a run with `--db`, `--difficulty`, `--sample` (0 = all) and `--seed`.
 
+## Run history
+
+`results/history.sqlite` (committed) is our own record, written by `history.py`:
+
+| Table | Contents |
+|---|---|
+| `runs` | one row per `evaluate.py` run: number, label, model, accuracy, and `LAST_CHANGE`, the newest database change it ran against |
+| `results` | one row per question per run: question, gold SQL and answer, the model's prompt, SQL and answer, verdict |
+| `changes` | one row per change made to the Snowflake database (loads, keys, type changes); `load_finch.py` adds them |
+
+Label each run, e.g. `--label "Run 2: column descriptions added"`. `report.py --runs` writes
+`results/report.html`: every run, its questions side by side with the gold answers, and the database
+changes made before it.
+
+```bash
+.venv/bin/python snowflake/evaluate.py --model claude-sonnet-4-5 --db financial --sample 0 --label "..."
+.venv/bin/python snowflake/report.py --runs
+```
+
 ## Report
 
 ```bash
