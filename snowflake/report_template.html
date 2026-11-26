@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FINCH gold queries</title>
+<style>
+:root{color-scheme:light;--bg:#f3f7f6;--s:#fff;--ink:#14302a;--ink2:#52665f;--line:#d6e0dc;--soft:#e8f0ed;--pine:#0f5b4a;--usable:#2a78d6;--broken:#eb6834;--empty:#1baf7a;--failed:#eda100;--fkonly:#8b9a94}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "Avenir Next","Segoe UI",system-ui,sans-serif}
+header{background:var(--s);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+.top{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;padding-top:16px}.top strong{font-size:17px}.mut{color:var(--ink2)}.top .mut{font-size:13px}
+[role=tablist]{display:flex;gap:4px;margin-top:10px}[role=tab]{font:inherit;font-weight:500;background:none;border:0;border-bottom:3px solid transparent;padding:8px 14px 9px;color:var(--ink2);cursor:pointer}[role=tab]:hover{color:var(--ink)}[role=tab][aria-selected=true]{color:var(--pine);border-color:var(--pine);font-weight:600}
+:focus-visible{outline:2px solid var(--pine);outline-offset:2px;border-radius:4px}
+.filters{display:flex;flex-wrap:wrap;gap:12px;padding:20px 0 8px;align-items:end}label{font-size:13px;color:var(--ink2);display:grid;gap:4px}
+select,input,.btn{font:inherit;color:var(--ink);background:var(--s);border:1px solid #b9c9c2;border-radius:6px;padding:6px 10px;min-height:38px}.btn{cursor:pointer}.btn:hover{background:var(--soft)}
+h1{font-size:clamp(24px,3.4vw,36px);line-height:1.15;font-weight:600;letter-spacing:-.015em;margin:20px 0 18px;max-width:26ch;text-wrap:balance}h2{font-size:20px;line-height:1.25;font-weight:600;margin:44px 0 4px}p{margin:0 0 12px;max-width:72ch}
+.bar{display:flex;gap:2px;height:12px;min-width:150px}td .bar{margin-top:6px}.bar.big{height:26px}.bar i{display:block;min-width:2px;border-radius:3px}.bar i:hover,.bar i:focus-visible{filter:brightness(.88)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 22px;margin:12px 0 0;font-size:14px}.sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:7px;vertical-align:-1px}.ln{display:inline-block;width:22px;height:4px;border-radius:2px;margin-right:7px;vertical-align:3px}
+.scroll{overflow-x:auto;background:var(--s);border-radius:8px;border:1px solid var(--line);margin-top:10px}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:8px 14px;border-top:1px solid var(--soft);vertical-align:top}thead th{border-top:0;background:var(--soft);font-weight:600;font-size:13px}tbody tr:hover{background:#f8fbfa}
+.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.nw{white-space:nowrap}.wrapany{overflow-wrap:anywhere}td.wrapany{min-width:240px}td.vd{min-width:190px}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12.5px/1.5 ui-monospace,monospace;margin:6px 0 2px;background:var(--bg);padding:8px 10px;border-radius:6px}summary{cursor:pointer}
+.small{font-size:13px;line-height:1.4}.link{font:inherit;color:var(--pine);background:none;border:0;padding:0;text-decoration:underline;cursor:pointer}
+#map svg{display:block;width:100%;height:auto;background:var(--s);border:1px solid var(--line);border-radius:8px;margin-top:10px}#map text{font:600 13px "Avenir Next","Segoe UI",system-ui,sans-serif;fill:var(--ink)}#map .e{fill:none;stroke-linecap:round;pointer-events:none}#map .h{stroke:transparent;stroke-width:22;fill:none;outline:none}#map .dim{opacity:.12}
+#tip{position:fixed;display:none;pointer-events:none;background:var(--ink);color:#fff;padding:7px 11px;border-radius:6px;font-size:13px;max-width:340px;z-index:9}[hidden]{display:none!important}main{padding-bottom:72px}
+@media(max-width:640px){header{position:static}}
+</style></head><body>
+<header><div class="wrap"><div class="top"><strong id="title"></strong><span class="mut" id="sub"></span></div>
+<div role="tablist" aria-label="Report sections"><button role="tab" id="t-sum" aria-controls="p-sum">Results</button><button role="tab" id="t-join" aria-controls="p-join">Table joins</button><button role="tab" id="t-type" aria-controls="p-type">Query types</button></div></div></header>
+<main class="wrap">
+<div class="filters"><label>Database<select id="fdb"></select></label><label class="q">Difficulty<select id="fdiff"></select></label><label class="q">Result<select id="fst"></select></label><label class="q">Search examples (question or SQL)<input id="fq" type="search" size="28"></label><button class="btn" id="reset" type="button">Clear filters</button></div>
+<section role="tabpanel" id="p-sum" aria-labelledby="t-sum"><h1 id="head"></h1><div class="bar big" id="total"></div><div class="legend" id="legend"></div>
+<p class="mut" style="margin-top:14px" id="note"></p>
+<h2>What each result means</h2><div class="scroll"><table id="statuses"></table></div>
+<h2>By database</h2><div class="scroll"><table id="dbs"></table></div>
+<h2>By difficulty</h2><div class="scroll"><table id="diffs"></table></div></section>
+<section role="tabpanel" id="p-join" aria-labelledby="t-join"><h1 id="jhead"></h1>
+<p id="jsum"></p><p class="mut">Every link was checked against the data. A link is a key when each row on the parent side is unique and at least 95% of child rows find their parent. Only keys are declared as foreign keys in Snowflake. Links come from FINCH’s SQLite files, from joins the gold SQL uses, or were found in the data: a column named like another table’s key whose values all appear there.</p>
+<div id="one"><div class="legend" id="jlegend"></div><div id="map"></div><p class="mut" id="mapnote" style="margin-top:8px"></p></div>
+<div id="many"><h2>Pick a database to see its map</h2><div class="scroll"><table id="jdbs"></table></div></div>
+<h2>Joins between tables</h2><div class="scroll"><table id="joins"></table></div>
+<h2>Tables and primary keys</h2><div class="scroll"><table id="pks"></table></div></section>
+<section role="tabpanel" id="p-type" aria-labelledby="t-type"><h1 id="thead"></h1><p class="mut">Queries that differ only in names, numbers, dates or condition order are one type, listed once per result. Open one to see an example.</p><div class="scroll"><table id="types"></table></div><p class="mut" id="more" style="margin-top:10px"></p></section>
+</main><div id="tip" role="status"></div>
+<script type="application/json" id="data">__DATA__</script>
+<script>
+const D=JSON.parse(document.getElementById('data').textContent),$=i=>document.getElementById(i);
+const G={usable:'Usable answer',broken:'Broken gold SQL',empty:'Empty answer',failed:'Failed or differs'};
+const S={usable:['usable','Usable','Returns a real answer, so it can be scored'],date_bug:['broken','Broken date comparison','Compares date text with a number, so the answer is meaningless'],placeholder:['broken','Unfilled placeholder',"Contains text such as '[payment_method]' that was never filled in"],no_rows:['empty','No rows','Runs but finds nothing (sometimes the right answer)'],zero:['empty','Zero','Every value is 0 (sometimes the right answer)'],null:['empty','Null or blank','Only nulls, blanks, or a mix with zeros'],timeout:['failed','Timeout','Still running after 5 minutes'],error:['failed','Error','The database rejected the query'],differs:['failed','Differs from SQLite','Ran, but the answer is not SQLite’s']};
+const K={key:['Key','--usable','Every child row finds exactly one parent'],'same table':['Same table','--fkonly','Compares rows of one table on the same column, not a link'],partial:['Partial','--failed','Too many child rows find no parent'],'not unique':['Not unique','--broken','The parent side repeats, so the join repeats rows'],'no values':['No values','--fkonly','The child column is empty']},V=Object.keys(K);
+const nf=n=>n.toLocaleString('en'),pc=(a,b)=>b?(100*a/b).toFixed(1)+'%':'–',many=(n,w)=>`${nf(n)} ${w}${n===1?'':'s'}`,el=(t,x,c)=>{const e=document.createElement(t);if(x!=null)e.textContent=x;if(c)e.className=c;return e};
+const weight=(r,d)=>d?(r.difficulty[d]||0):r.questions;
+function tip(n,text){const show=e=>{const b=n.getBoundingClientRect(),t=$('tip');t.textContent=text;t.style.display='block';t.style.left=Math.max(8,Math.min((e.clientX||b.left)+12,innerWidth-t.offsetWidth-8))+'px';t.style.top=Math.min((e.clientY||b.bottom)+14,innerHeight-t.offsetHeight-8)+'px'};n.tabIndex=0;n.addEventListener('pointermove',show);n.addEventListener('focus',show);for(const x of['pointerleave','blur'])n.addEventListener(x,()=>$('tip').style.display='none')}
+function bar(host,c,total){host.replaceChildren();for(const g in G){if(!c[g])continue;const i=el('i'),t=`${nf(c[g])} (${pc(c[g],total)}) ${G[g]}`;i.style.cssText=`flex:${c[g]} 0 0;background:var(--${g})`;i.setAttribute('role','img');i.setAttribute('aria-label',t);tip(i,t);host.append(i)}}
+function table(id,heads,rows,none='Nothing matches these filters. Clear the filters to see everything.'){const t=$(id);t.replaceChildren();const h=el('tr');heads.forEach(([x,c])=>{const th=el('th',x,c);th.scope='col';h.append(th)});const a=el('thead'),b=el('tbody');a.append(h);rows.forEach(r=>{const tr=el('tr');r.forEach((x,i)=>{const td=el('td',null,heads[i][1]);td.append(x);tr.append(td)});b.append(tr)});if(!rows.length){const tr=el('tr'),td=el('td',none);td.colSpan=heads.length;tr.append(td);b.append(tr)}t.append(a,b)}
+const pick=db=>{const b=el('button',db,'link');b.type='button';b.onclick=()=>{$('fdb').value=db;render();scrollTo(0,0)};return b};
+const add=(m,k,g,n)=>{const o=m[k]||(m[k]={n:0});o.n+=n;o[g]=(o[g]||0)+n};
+const groupRows=(m,keys,f=x=>x)=>keys.map(k=>{const o=m[k],b=el('div',null,'bar');bar(b,o,o.n);return[f(k),nf(o.n),nf(o.usable||0),pc(o.usable||0,o.n),b,nf(o.broken||0),nf(o.empty||0),nf(o.failed||0)]});
+const GH=n=>[[n],['Questions','n'],['Usable','n'],['Usable share','n'],['Split'],['Broken','n'],['Empty','n'],['Failed','n']];
+function map(J){const host=$('map');host.replaceChildren();const E={};for(const j of J){if(j.a===j.b)continue;const k=[j.a,j.b].sort().join('|'),e=E[k]||(E[k]={a:j.a,b:j.b,v:'key',q:0});if(V.indexOf(j.v)>V.indexOf(e.v))e.v=j.v;e.q+=j.q}
+ const es=Object.values(E),deg={};for(const e of es)for(const t of[e.a,e.b])deg[t]=(deg[t]||0)+1;let N=Object.keys(deg).sort((x,y)=>deg[y]-deg[x]||x.localeCompare(y));
+ if(!N.length){host.append(el('p','No tables are joined in this database.','mut'));return}
+ const star=es.length===N.length-1&&deg[N[0]]===es.length&&N.length>2,W=1100,H=Math.max(380,Math.min(820,260+N.length*22)),P={},ring=star?N.slice(1):N;if(star)P[N[0]]=[W/2,H/2,0];
+ ring.forEach((t,i)=>{const a=-Math.PI/2+2*Math.PI*(i+.5)/ring.length;P[t]=[W/2+Math.cos(a)*W*.29,H/2+Math.sin(a)*(H/2-64),Math.cos(a)]});
+ const ns='http://www.w3.org/2000/svg',mk=(t,at)=>{const e=document.createElementNS(ns,t);for(const k in at)e.setAttribute(k,at[k]);return e},svg=mk('svg',{viewBox:`0 0 ${W} ${H}`,role:'group','aria-label':'Map of joined tables'}),top=Math.max(1,...es.map(e=>e.q)),all=[];
+ for(const e of es){const[x1,y1]=P[e.a],[x2,y2]=P[e.b],kind=e.v,l=mk('line',{x1,y1,x2,y2,class:'e',stroke:`var(${K[kind][1]})`,'stroke-width':e.q?2+7*Math.sqrt(e.q/top):2,'stroke-dasharray':kind==='key'?'':'7 6'}),h=mk('line',{x1,y1,x2,y2,class:'h',role:'img','aria-label':`${e.a} and ${e.b}`});
+  tip(h,`${e.a} and ${e.b}: ${many(e.q,'gold question')}. ${K[kind][0]}: ${K[kind][2].toLowerCase()}.`);const on=()=>all.forEach(o=>o!==l&&o.classList.add('dim')),off=()=>all.forEach(o=>o.classList.remove('dim'));h.addEventListener('pointerenter',on);h.addEventListener('pointerleave',off);h.addEventListener('focus',on);h.addEventListener('blur',off);all.push(l);svg.append(l,h)}
+ for(const t of N){const[x,y,c]=P[t];svg.append(mk('circle',{cx:x,cy:y,r:8,fill:'var(--pine)',stroke:'#fff','stroke-width':2}));const mid=Math.abs(c)<.25,tx=mk('text',{x:mid?x:x+(c>0?16:-16),y:star&&t===N[0]?y-20:mid?y+(y<H/2?-16:26):y+5,'text-anchor':mid?'middle':c>0?'start':'end',style:'paint-order:stroke;stroke:#fff;stroke-width:5px'});tx.textContent=t.toLowerCase();svg.append(tx)}
+ host.append(svg)}
+function joins(db){const J=D.joins.filter(j=>!db||j.db===db),T=D.tables.filter(t=>!db||t.db===db),n=k=>J.filter(j=>j.v===k).length,bad=J.filter(j=>j.v!=='key'&&j.v!=='same table');
+ $('jhead').textContent=`${many(J.length,'table join')}${db?' in '+db:' across '+many(new Set(J.map(j=>j.db)).size,'database')}`;$('jsum').textContent=`${nf(n('key'))} are keys. ${nf(bad.length)} are not: ${nf(n('not unique'))} not unique, ${nf(n('partial'))} partial and ${nf(n('no values'))} with no values. Gold SQL joins through them ${many(bad.reduce((s,j)=>s+j.q,0),'time')}.`+(n('same table')?` ${many(n('same table'),'join')} of a table to itself on the same column ${n('same table')===1?'is':'are'} listed but not counted.`:'');
+ $('one').hidden=!db;$('many').hidden=!!db;
+ if(db){map(J);$('jlegend').replaceChildren(...V.filter(k=>k!=='same table').map(k=>{const s=el('span'),w=el('i',null,'ln');w.style.background=`var(${K[k][1]})`;s.append(w,K[k][0]);return s}));
+  const selfs=J.filter(j=>j.a===j.b).length;$('mapnote').textContent='Thicker lines mean more gold questions use the join. Dashed lines are not keys. Where two tables have several links, the line shows the worst one. See the table below for the exact columns.'+(selfs?` ${many(selfs,'join')} of a table to itself appear only in the table.`:'')}
+ else{const m={};for(const t of T)(m[t.db]=m[t.db]||{t:0,p:0,k:0,b:0,q:0,bq:0}).t++,m[t.db].p+=t.pk?1:0;for(const j of J){const o=m[j.db];if(j.v==='key')o.k++;else if(j.v!=='same table'){o.b++;o.bq+=j.q}o.q+=j.q}
+  table('jdbs',[['Database'],['Tables','n'],['With a primary key','n'],['Keys','n'],['Not keys','n'],['Join uses in gold','n'],['Uses of links that are not keys','n']],Object.keys(m).sort((a,b)=>m[b].bq-m[a].bq||m[b].q-m[a].q||a.localeCompare(b)).map(k=>[pick(k),nf(m[k].t),nf(m[k].p),nf(m[k].k),nf(m[k].b),nf(m[k].q),nf(m[k].bq)]))}
+ table('joins',[...(db?[]:[['Database']]),['Child table'],['Parent table'],['On','wrapany'],['Verdict','vd'],['Child rows that find a parent','n'],['From','nw'],['Gold questions','n']],J.slice().sort((a,b)=>V.indexOf(b.v)-V.indexOf(a.v)||b.q-a.q||a.db.localeCompare(b.db)).map(j=>{const s=el('div'),w=el('i',null,'sw');w.style.background=`var(${K[j.v][1]})`;s.append(w,K[j.v][0]);s.append(el('div',K[j.v][2],'mut small'));return[...(db?[]:[j.db]),j.a.toLowerCase(),j.b.toLowerCase(),j.on.toLowerCase(),s,j.rows?`${nf(j.hit)} of ${nf(j.rows)} (${pc(j.hit,j.rows)})`:'–',j.fk?'SQLite foreign key':j.found?'Found in data':'Gold SQL',nf(j.q)]}));
+ table('pks',[...(db?[]:[['Database']]),['Table'],['Primary key','wrapany']],T.map(t=>[...(db?[]:[t.db]),t.t.toLowerCase(),t.pk?t.pk.toLowerCase():'None']))}
+function render(){const db=$('fdb').value,df=$('fdiff').value,st=$('fst').value,q=$('fq').value.toLowerCase();
+ const R=D.rows.filter(r=>(!db||r.db===db)&&(!st||r.status===st)&&(!q||(r.question+' '+r.sql).toLowerCase().includes(q))&&weight(r,df));
+ const tot={n:0},bs={},bd={},bf={};for(const r of R){const w=weight(r,df),g=S[r.status][0];tot.n+=w;tot[g]=(tot[g]||0)+w;bs[r.status]=(bs[r.status]||0)+w;add(bd,r.db,g,w);for(const d in r.difficulty)if(!df||d===df)add(bf,d,g,r.difficulty[d])}
+ $('head').textContent=tot.n?`${nf(tot.usable||0)} of ${nf(tot.n)} questions have an answer we can score (${pc(tot.usable||0,tot.n)})`:'No questions match these filters';
+ bar($('total'),tot,tot.n);$('legend').replaceChildren(...Object.keys(G).map(g=>{const s=el('span'),w=el('i',null,'sw');w.style.background=`var(--${g})`;s.append(w,`${G[g]}: ${nf(tot[g]||0)} (${pc(tot[g]||0,tot.n)})`);return s}));
+ $('note').textContent='This checks FINCH’s own gold SQL. It is not the accuracy of an AI model. Queries ran with the gold repairs applied: a fixed date for accounting, four-digit years and case-insensitive text.';
+ table('statuses',[['Result'],['Meaning'],['Questions','n'],['Share','n']],Object.keys(S).filter(k=>bs[k]).map(k=>{const s=el('span'),w=el('i',null,'sw');w.style.background=`var(--${S[k][0]})`;s.append(w,S[k][1]);return[s,S[k][2],nf(bs[k]),pc(bs[k],tot.n)]}));
+ table('dbs',GH('Database'),groupRows(bd,Object.keys(bd).sort((a,b)=>bd[b].n-bd[a].n),pick));table('diffs',GH('Difficulty'),groupRows(bf,['easy','medium','hard'].filter(k=>bf[k])));
+ const top=R.slice().sort((a,b)=>weight(b,df)-weight(a,df));$('thead').textContent=many(top.length,'query type');
+ table('types',[['Example'],['Database'],['Result'],['Questions','n'],['Queries','n']],top.slice(0,200).map(r=>{const d=el('details');d.append(el('summary',r.question),el('pre',r.sql),el('pre',(r.status==='error'?'Error: ':'First rows: ')+(r.sample||'none')));return[d,r.db,S[r.status][1],nf(weight(r,df)),nf(r.queries)]}));
+ $('more').textContent=`Showing ${nf(Math.min(200,top.length))} of ${nf(top.length)}, most questions first.`;joins(db)}
+const tabs=['sum','join','type'];function go(t){tabs.forEach(x=>{const on=x===t,b=$('t-'+x);b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1;$('p-'+x).hidden=!on});document.querySelectorAll('.q').forEach(e=>e.hidden=t==='join');history.replaceState(null,'','#'+t+($('fdb').value?'/'+$('fdb').value:''))}
+tabs.forEach((x,i)=>{$('t-'+x).onclick=()=>go(x);$('t-'+x).onkeydown=e=>{const s={ArrowRight:1,ArrowLeft:-1}[e.key];if(s){const n=tabs[(i+s+3)%3];go(n);$('t-'+n).focus()}}});
+const opts=(id,all,xs)=>$(id).append(...[['',all],...xs].map(([v,t])=>{const o=el('option',t);o.value=v;return o}));
+opts('fdb','All databases',[...new Set(D.rows.map(r=>r.db))].sort().map(x=>[x,x]));opts('fdiff','All',['easy','medium','hard'].map(x=>[x,x]));opts('fst','All',Object.keys(S).filter(k=>D.rows.some(r=>r.status===k)).map(k=>[k,S[k][1]]));
+$('title').textContent=`FINCH gold queries on ${D.engine}`;document.title=$('title').textContent;$('sub').textContent=`Run ${D.created}`;
+['fdb','fdiff','fst'].forEach(i=>$(i).onchange=render);$('fq').oninput=render;$('reset').onclick=()=>{['fdb','fdiff','fst','fq'].forEach(i=>$(i).value='');render()};
+const[h0,h1]=location.hash.slice(1).split('/');if(h1&&[...$('fdb').options].some(o=>o.value===h1))$('fdb').value=h1;render();go(tabs.includes(h0)?h0:'sum');
+</script></body></html>

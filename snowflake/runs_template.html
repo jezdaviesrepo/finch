@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FINCH on Snowflake: model runs</title>
+<style>
+:root{color-scheme:light;--bg:#f3f7f6;--s:#fff;--ink:#14302a;--ink2:#52665f;--line:#d6e0dc;--soft:#e8f0ed;--pine:#0f5b4a;--correct:#2a78d6;--wrong:#eb6834;--error:#eda100;--skipped:#8b9a94}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "Avenir Next","Segoe UI",system-ui,sans-serif}
+header{background:var(--s);border-bottom:1px solid var(--line)}.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;padding:16px 0}.top strong{font-size:17px}.mut{color:var(--ink2)}
+:focus-visible{outline:2px solid var(--pine);outline-offset:2px;border-radius:4px}
+label{font-size:13px;color:var(--ink2);display:grid;gap:4px}select,input{font:inherit;color:var(--ink);background:var(--s);border:1px solid #b9c9c2;border-radius:6px;padding:6px 10px;min-height:38px}
+h1{font-size:clamp(24px,3.4vw,34px);line-height:1.15;font-weight:600;letter-spacing:-.015em;margin:28px 0 6px}h2{font-size:20px;font-weight:600;margin:40px 0 4px}p{margin:0 0 12px;max-width:72ch}
+.score{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin:18px 0 6px}.score b{font-size:clamp(44px,7vw,68px);line-height:1;font-weight:600;letter-spacing:-.03em;color:var(--pine)}.score span{font-size:18px}
+.bar{display:flex;gap:2px;height:12px;min-width:140px}.bar.big{height:24px;margin:12px 0}.bar i{display:block;min-width:2px;border-radius:3px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:14px}.sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:7px;vertical-align:-1px}
+.facts{display:grid;grid-template-columns:max-content 1fr;gap:4px 18px;margin:18px 0 0;font-size:14px}.facts dt{color:var(--ink2)}.facts dd{margin:0}
+.scroll{overflow-x:auto;background:var(--s);border-radius:8px;border:1px solid var(--line);margin-top:10px}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:8px 14px;border-top:1px solid var(--soft);vertical-align:top}thead th{border-top:0;background:var(--soft);font-weight:600;font-size:13px}
+.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.filters{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin-top:12px}
+details.q{background:var(--s);border:1px solid var(--line);border-radius:8px;margin-top:8px}details.q>summary{cursor:pointer;padding:10px 14px;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:baseline;list-style:none}details.q>summary::-webkit-details-marker{display:none}
+details.q[open]>summary{border-bottom:1px solid var(--soft)}.tag{font-size:13px;white-space:nowrap}.meta{font-size:13px;color:var(--ink2);white-space:nowrap}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:12px 14px 14px}@media(max-width:760px){.cols{grid-template-columns:1fr}}
+.cols h3{font-size:14px;margin:0 0 4px;font-weight:600}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12.5px/1.5 ui-monospace,monospace;margin:4px 0 10px;background:var(--bg);padding:8px 10px;border-radius:6px}
+.err{color:#9a3a12}.nw{white-space:nowrap}details.p summary{cursor:pointer;color:var(--pine)}main{padding-bottom:72px}[hidden]{display:none!important}
+</style></head><body>
+<header><div class="wrap top"><strong>FINCH on Snowflake: model runs</strong><label id="pick">Run<select id="run"></select></label></div></header>
+<main class="wrap">
+<h1 id="title"></h1><p class="mut" id="label"></p>
+<div class="score"><b id="pct"></b><span id="frac"></span></div>
+<div class="bar big" id="total"></div><div class="legend" id="legend"></div>
+<dl class="facts" id="facts"></dl>
+<details class="p" style="margin-top:12px"><summary>Show the prompt the model got (first question)</summary><pre id="prompt"></pre></details>
+<h2 id="chead"></h2><p class="mut" id="cnote"></p><div class="scroll"><table id="changes"></table></div>
+<h2>By difficulty</h2><div class="scroll"><table id="bydiff"></table></div>
+<h2>By joins the gold SQL needs</h2><div class="scroll"><table id="byjoin"></table></div>
+<h2>Every question</h2><p class="mut">Open a question to compare the gold SQL and answer (FINCH's, run on SQLite) with the model's SQL and its answer from Snowflake.</p>
+<div class="filters"><label>Result<select id="fres"></select></label><label>Search question or SQL<input id="fq" type="search" size="30"></label></div>
+<p class="mut" id="shown" style="margin-top:10px"></p><div id="list"></div>
+</main>
+<script type="application/json" id="data">__DATA__</script>
+<script>
+const D=JSON.parse(document.getElementById('data').textContent),RUNS=D.runs,$=i=>document.getElementById(i);
+const K={correct:'Correct',wrong:'Wrong answer',error:'SQL error',skipped:'Skipped (gold answer empty or broken)'};
+const nf=n=>n.toLocaleString('en'),pc=(a,b)=>b?(100*a/b).toFixed(1)+'%':'–',el=(t,x,c)=>{const e=document.createElement(t);if(x!=null)e.textContent=x;if(c)e.className=c;return e};
+const kind=r=>r.gold_error?'skipped':r.pred_error?'error':r.correct?'correct':'wrong',joins=r=>(r.gold_sql.match(/\bjoin\b/gi)||[]).length;
+const rows=(x,n)=>x==null?'(none)':x.length?x.map(r=>r.join(' | ')).join('\n')+(n>x.length?`\n… ${nf(n-x.length)} more rows`:''):'(no rows)';
+function bar(host,c){host.replaceChildren();for(const k in K)if(c[k]){const i=el('i');i.style.cssText=`flex:${c[k]} 0 0;background:var(--${k})`;i.title=`${K[k]}: ${c[k]}`;host.append(i)}}
+function table(id,head,data){const t=$(id);t.replaceChildren();const h=el('tr');head.forEach(([x,c])=>h.append(el('th',x,c)));const a=el('thead'),b=el('tbody');a.append(h);data.forEach(r=>{const tr=el('tr');r.forEach((x,i)=>{const td=el('td',null,head[i][1]);td.append(x);tr.append(td)});b.append(tr)});t.append(a,b)}
+function group(R,f,order){const m={};for(const r of R){const k=f(r),o=m[k]||(m[k]={n:0});o.n++;o[kind(r)]=(o[kind(r)]||0)+1}
+ return(order||Object.keys(m).sort((a,b)=>a-b)).filter(k=>m[k]).map(k=>{const o=m[k],s=o.n-(o.skipped||0),b=el('div',null,'bar');bar(b,o);return[String(k),nf(o.n),nf(o.correct||0),pc(o.correct||0,s),b]})}
+function show(){const run=RUNS[+$('run').value],R=run.results,c={};R.forEach(r=>c[kind(r)]=(c[kind(r)]||0)+1);const scored=R.length-(c.skipped||0);
+ $('title').textContent=`${run.name}: ${run.model} on ${[...new Set(R.map(r=>r.db_id))].join(', ')}`;$('label').textContent=run.label||'';
+ $('pct').textContent=pc(c.correct||0,scored);$('frac').textContent=`${nf(c.correct||0)} of ${nf(scored)} questions answered correctly (execution accuracy)`;
+ bar($('total'),c);$('legend').replaceChildren(...Object.keys(K).filter(k=>c[k]).map(k=>{const s=el('span'),w=el('i',null,'sw');w.style.background=`var(--${k})`;s.append(w,`${K[k]} ${nf(c[k])}`);return s}));
+ const F=[['Model',run.model],['Run id',run.run_id],['Run at',run.at],['Examples in prompt',run.shots?`${run.shots} similar questions`:'None'],['Questions',`${nf(R.length)} (${nf(c.skipped||0)} skipped)`],['Scoring','Same rows as the gold answer, in any order unless the gold SQL has ORDER BY; numbers to about 5 significant figures']];
+ $('facts').replaceChildren(...F.flatMap(([a,b])=>[el('dt',a),el('dd',b)]));$('prompt').textContent=(R.find(r=>r.prompt)||{}).prompt||'';changes(run);
+ const H=n=>[[n],['Questions','n'],['Correct','n'],['Accuracy','n'],['Split']];
+ table('bydiff',H('Difficulty'),group(R,r=>r.difficulty,['easy','medium','hard']));table('byjoin',H('Joins'),group(R,joins));
+ $('fres').replaceChildren(el('option','All results'),...Object.keys(K).filter(k=>c[k]).map(k=>{const o=el('option',`${K[k]} (${c[k]})`);o.value=k;return o}));$('fres').options[0].value='';list()}
+function changes(run){const last=+$('run').value===RUNS.length-1,C=run.changes;$('chead').textContent=run.run_no===1?'Database state for this run':`Changes to the database since Run ${run.run_no-1}`;
+ $('cnote').textContent=(run.run_no===1?'Everything done to the Snowflake database before this first run.':C.length?'':'None: same database as the previous run.')+(last&&D.pending.length?` ${many(D.pending.length,'change')} made since this run ${D.pending.length===1?'is':'are'} not yet tested by any run: see the end of this list.`:'');
+ const rowsOf=(L,tag)=>L.map(c=>[c.at,c.db_id||'all',c.kind,tag?`${c.description} (${tag})`:c.description]);
+ table('changes',[['When','nw'],['Database'],['Kind'],['Change']],[...rowsOf(C),...(last?rowsOf(D.pending,'not yet tested'):[])])}
+const many=(n,w)=>`${nf(n)} ${w}${n===1?'':'s'}`;
+function list(){const R=RUNS[+$('run').value].results,f=$('fres').value,s=$('fq').value.trim().toLowerCase(),host=$('list');host.replaceChildren();
+ const L=R.filter(r=>(!f||kind(r)===f)&&(!s||(r.question+' '+r.gold_sql+' '+(r.pred_sql||'')).toLowerCase().includes(s)));$('shown').textContent=`Showing ${nf(L.length)} of ${nf(R.length)}.`;
+ for(const r of L){const d=el('details',null,'q'),sm=el('summary'),k=kind(r),t=el('span',null,'tag'),w=el('i',null,'sw');w.style.background=`var(--${k})`;t.append(w,K[k].split(' (')[0]);
+  sm.append(t,el('span',r.question),el('span',`${r.difficulty} · ${joins(r)} join${joins(r)===1?'':'s'}`,'meta'));d.append(sm);
+  d.addEventListener('toggle',()=>{if(!d.open||d.children.length>1)return;const g=el('div'),m=el('div'),cols=el('div',null,'cols');
+   g.append(el('h3','Gold SQL (FINCH, on SQLite)'),el('pre',r.gold_sql),el('h3',`Gold answer${r.gold_rows!=null?` (${nf(r.gold_rows)} rows)`:''}`),el('pre',r.gold_error||rows(r.gold,r.gold_rows)));
+   m.append(el('h3',`${RUNS[+$('run').value].model} SQL (on Snowflake)`),el('pre',r.pred_sql||'(none)'),el('h3',r.pred_error?'Error':`Model answer${r.pred_rows!=null?` (${nf(r.pred_rows)} rows)`:''}`),el('pre',r.pred_error||rows(r.pred,r.pred_rows),r.pred_error?'err':null));
+   cols.append(g,m);d.append(cols)});host.append(d)}}
+RUNS.forEach((r,i)=>{const o=el('option',`${r.name}${r.label?': '+r.label.split('.')[0]:''}`);o.value=i;$('run').append(o)});$('pick').hidden=RUNS.length<2;$('run').value=RUNS.length-1;
+$('run').onchange=show;$('fres').onchange=list;$('fq').oninput=list;show();
+</script></body></html>
