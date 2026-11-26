@@ -95,6 +95,26 @@ def examples(pool, question, n):
     return "\nSimilar questions with correct SQL:\n" + "\n".join(f"Q: {t}\nSQL: {s}" for _, t, s in top) + "\n"
 
 
+def schema_text(cur, database, schema):
+    """Tables and columns for the prompt: TABLE(COL TYPE, ...). Tables with descriptions (COMMENTs, see context.py)
+    get them too, one column per line; tables without keep the one-line form, so their prompt text is unchanged."""
+    cols = cur.execute(f"select table_name, column_name, data_type, comment from {database}.information_schema.columns "
+                       "where table_schema = %s order by table_name, ordinal_position", (schema,)).fetchall()
+    notes = dict(cur.execute(f"select table_name, comment from {database}.information_schema.tables "
+                             "where table_schema = %s and comment is not null", (schema,)).fetchall())
+    tables = {}
+    for t, c, ty, comment in cols:
+        tables.setdefault(t, []).append((f"{q(c)} {ty}", comment))
+    out = []
+    for t, cs in tables.items():
+        if t in notes or any(comment for _, comment in cs):
+            out.append(f"{q(t)}" + (f"  -- {notes[t]}" if t in notes else "") + "\n(" +
+                       ",\n".join(f"  {c}" + (f"  -- {comment}" if comment else "") for c, comment in cs) + "\n)")
+        else:
+            out.append(f"{q(t)}({', '.join(c for c, _ in cs)})")
+    return "\n".join(out)
+
+
 def strip_fences(sql):
     m = re.search(r"```(?:sql)?\s*(.*?)```", sql, re.S | re.I)
     return (m.group(1) if m else sql).strip().rstrip(";")
@@ -137,8 +157,18 @@ def main():
     # examples never share a question or a query template with anything being tested
     tested_q, tested_t = set(pairs.QUESTION.str.lower()), set(pairs.SQL_SQLITE.map(template))
     run_id = f"{args.model}{f'_{args.shots}shot' if args.shots else ''}_{datetime.datetime.now():%Y%m%d_%H%M%S}"
-    results, details = [], []
+    results, details, t0 = [], [], time.monotonic()
+
+    def clock(i):  # elapsed and estimated time left, e.g. "2:10 elapsed, ~3:05 left"
+        spent = time.monotonic() - t0
+        left = spent / i * (len(pairs) - i)
+        return f"{int(spent // 60)}:{int(spent % 60):02d} elapsed, ~{int(left // 60)}:{int(left % 60):02d} left"
+
+    if args.model != "gold":  # fail fast on a model name Cortex doesn't know, before running every question
+        cur.execute("select snowflake.cortex.complete(%s, 'Reply with OK')", (args.model,))
+    print(f"{len(pairs)} questions, model {args.model}", flush=True)
     for i, r in enumerate(pairs.itertuples(), 1):
+        q0 = time.monotonic()
         schema = r.DB_ID.upper()
         out = dict(RUN_ID=run_id, MODEL=args.model, QUESTION_ID=r.QUESTION_ID, DB_ID=r.DB_ID,
                    SOURCE=r.SOURCE, DIFFICULTY=r.DIFFICULTY, PRED_SQL=None, PRED_ERROR=None,
@@ -153,24 +183,18 @@ def main():
                 out["GOLD_ERROR"] = "empty/zero gold answer"
         except Exception as e:
             out["GOLD_ERROR"] = str(e)[:1000]
-        detail = dict(question=r.QUESTION, gold_sql=gold_sql)
+        detail = dict(question=r.QUESTION, gold_sql=gold_sql, seconds=None)
         details.append(detail)
         if out["GOLD_ERROR"] and not args.keep_empty_gold:
             results.append(out)
-            print(f"[{i}/{len(pairs)}] {r.DB_ID:<28} {r.DIFFICULTY:<6} skip (gold: {out['GOLD_ERROR'][:40]})")
+            print(f"[{i}/{len(pairs)}] {r.DB_ID:<28} {r.DIFFICULTY:<6} skip (gold: {out['GOLD_ERROR'][:40]})  {clock(i)}", flush=True)
             continue
         try:
             if args.model == "gold":
                 pred_sql = r.SQL_SNOWFLAKE
             else:
                 if schema not in schemas:
-                    cols = cur.execute(
-                        f"select table_name, column_name, data_type from {D}.information_schema.columns "
-                        "where table_schema = %s order by table_name, ordinal_position", (schema,)).fetchall()
-                    tables = {}
-                    for t, c, ty in cols:
-                        tables.setdefault(t, []).append(f"{q(c)} {ty}")
-                    schemas[schema] = "\n".join(f"{q(t)}({', '.join(cs)})" for t, cs in tables.items())
+                    schemas[schema] = schema_text(cur, D, schema)
                 today = f"\nToday's date is {TODAY[r.DB_ID]}: use that literal date, not CURRENT_DATE." if r.DB_ID in TODAY else ""
                 if args.shots and schema not in pools:
                     pool = everything[(everything.DB_ID == r.DB_ID) & everything.SQL_SNOWFLAKE.notna()].drop_duplicates("QUESTION")
@@ -188,15 +212,18 @@ def main():
         except Exception as e:
             out["PRED_ERROR"] = str(e)[:1000]
         detail.update(gold=None if gold is None else gold[:10], gold_n=None if gold is None else len(gold),
-                      pred=None if pred is None else pred[:10], pred_n=None if pred is None else len(pred))
+                      pred=None if pred is None else pred[:10], pred_n=None if pred is None else len(pred),
+                      seconds=round(time.monotonic() - q0, 2))
         results.append(out)
-        print(f"[{i}/{len(pairs)}] {r.DB_ID:<28} {r.DIFFICULTY:<6} {'OK ' if out['CORRECT'] else 'ERR' if out['PRED_ERROR'] else 'X  '}", flush=True)
+        print(f"[{i}/{len(pairs)}] {r.DB_ID:<28} {r.DIFFICULTY:<6} {'OK ' if out['CORRECT'] else 'ERR' if out['PRED_ERROR'] else 'X  '}  {clock(i)}", flush=True)
 
-    no = save_run(dict(run_id=run_id, label=args.label, model=args.model, shots=args.shots, db_filter=args.db), [dict(
+    seconds = round(time.monotonic() - t0, 1)
+    print(f"all {len(pairs)} questions took {int(seconds // 60)}:{int(seconds % 60):02d}", flush=True)
+    no = save_run(dict(run_id=run_id, label=args.label, model=args.model, shots=args.shots, db_filter=args.db, seconds=seconds), [dict(
         question_id=int(o["QUESTION_ID"]), db_id=o["DB_ID"], difficulty=o["DIFFICULTY"], question=d["question"],
         gold_sql=d["gold_sql"], gold_answer=d.get("gold"), gold_rows=d.get("gold_n"), gold_error=o["GOLD_ERROR"],
         prompt=d.get("prompt"), pred_sql=o["PRED_SQL"], pred_answer=d.get("pred"), pred_rows=d.get("pred_n"),
-        pred_error=o["PRED_ERROR"], correct=bool(o["CORRECT"])) for o, d in zip(results, details)])
+        pred_error=o["PRED_ERROR"], correct=bool(o["CORRECT"]), seconds=d["seconds"]) for o, d in zip(results, details)])
     res = pd.DataFrame(results)
     res = res.astype({c: "string" for c in res.columns if c not in ("QUESTION_ID", "CORRECT")})
     write_pandas(sf, res, "EVAL_RESULTS", database=D, schema="BENCHMARK", auto_create_table=True)

@@ -21,6 +21,8 @@ import time
 from collections import Counter
 from multiprocessing import Pool
 
+import sqlglot
+
 from evaluate import degenerate, sqlite_rows, template
 from history import PATH as HISTORY, connect as connect_history
 from load_finch import DATA, ROOT, compares_text_with_number, real_file, repair_gold, table_joins
@@ -107,6 +109,14 @@ def render(engine):
     print(f"wrote {out}")
 
 
+def pretty(sql, dialect):
+    """SQL laid out one clause per line, for reading only (the history keeps the SQL exactly as it ran)."""
+    try:
+        return sqlglot.transpile(sql, read=dialect, write=dialect, pretty=True)[0] if sql else sql
+    except Exception:
+        return sql
+
+
 def render_runs():
     """results/history.sqlite -> results/report.html: every run, with the database changes made before it."""
     db = connect_history()
@@ -116,7 +126,8 @@ def render_runs():
     for r in db.execute("select * from runs order by run_no").fetchall():
         run = dict(r, name=f"Run {r['run_no']}", changes=[c for c in changes if prev < c["id"] <= (r["last_change"] or 0)])
         prev = r["last_change"] or prev
-        run["results"] = [dict(x, gold=json.loads(x["gold_answer"] or "null"), pred=json.loads(x["pred_answer"] or "null"))
+        run["results"] = [dict(x, gold=json.loads(x["gold_answer"] or "null"), pred=json.loads(x["pred_answer"] or "null"),
+                               gold_sql=pretty(x["gold_sql"], "sqlite"), pred_sql=pretty(x["pred_sql"], "snowflake"))
                           for x in db.execute("select * from results where run_id = ? order by question_id", (r["run_id"],))]
         runs.append(run)
     page = dict(runs=runs, pending=[c for c in changes if c["id"] > prev])

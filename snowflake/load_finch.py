@@ -10,6 +10,7 @@ Usage:
   python snowflake/load_finch.py --connection default --warehouse COMPUTE_WH [--database FINCH]
 """
 import argparse
+import atexit
 import json
 import pathlib
 import re
@@ -511,7 +512,17 @@ def connect(args):
         warehouse = cur.execute("show warehouses").fetchone()[0]
     cur.execute(f"use warehouse {q(warehouse)}")
     print(f"using warehouse {warehouse}")
+    atexit.register(suspend, sf, warehouse)  # also after an error; not after kill -9
     return sf
+
+
+def suspend(sf, warehouse):
+    """Stop paying for the warehouse as soon as the script ends, instead of waiting for its auto-suspend."""
+    try:
+        sf.cursor().execute(f"alter warehouse {q(warehouse)} suspend")
+        print(f"warehouse {warehouse} suspended")
+    except Exception as e:  # already suspended, or the connection is gone
+        print(f"warehouse {warehouse} not suspended: {str(e).splitlines()[0][:120]}")
 
 
 def main():

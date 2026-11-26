@@ -7,11 +7,12 @@
 header{background:var(--s);border-bottom:1px solid var(--line)}.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
 .top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;padding:16px 0}.top strong{font-size:17px}.mut{color:var(--ink2)}
 :focus-visible{outline:2px solid var(--pine);outline-offset:2px;border-radius:4px}
-label{font-size:13px;color:var(--ink2);display:grid;gap:4px}select,input{font:inherit;color:var(--ink);background:var(--s);border:1px solid #b9c9c2;border-radius:6px;padding:6px 10px;min-height:38px}
+label{font-size:13px;color:var(--ink2);display:grid;gap:4px}select,input,.btn{font:inherit;color:var(--ink);background:var(--s);border:1px solid #b9c9c2;border-radius:6px;padding:6px 10px;min-height:38px}.btn{cursor:pointer;color:var(--pine);font-weight:500}.btn:hover{background:var(--soft)}.btn.sm{min-height:30px;padding:3px 10px;font-size:13px}
+dialog{border:0;border-radius:10px;padding:0;width:min(920px,94vw);max-height:88vh;box-shadow:0 18px 50px rgba(20,48,42,.28);color:var(--ink)}dialog::backdrop{background:rgba(20,48,42,.45)}.dhead{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--s)}.dhead p{margin:2px 0 0;font-size:13px}dialog pre{margin:0;padding:16px 20px;background:var(--s);font-size:12.5px;max-height:calc(88vh - 80px);overflow:auto;border-radius:0}
 h1{font-size:clamp(24px,3.4vw,34px);line-height:1.15;font-weight:600;letter-spacing:-.015em;margin:28px 0 6px}h2{font-size:20px;font-weight:600;margin:40px 0 4px}p{margin:0 0 12px;max-width:72ch}
 .score{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin:18px 0 6px}.score b{font-size:clamp(44px,7vw,68px);line-height:1;font-weight:600;letter-spacing:-.03em;color:var(--pine)}.score span{font-size:18px}
 .bar{display:flex;gap:2px;height:12px;min-width:140px}.bar.big{height:24px;margin:12px 0}.bar i{display:block;min-width:2px;border-radius:3px}
-.legend{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:14px}.sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:7px;vertical-align:-1px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:14px}.sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:7px;vertical-align:-1px}.ln{display:inline-block;width:22px;border-radius:2px;margin-right:7px;vertical-align:3px}
 .facts{display:grid;grid-template-columns:max-content 1fr;gap:4px 18px;margin:18px 0 0;font-size:14px}.facts dt{color:var(--ink2)}.facts dd{margin:0}
 .scroll{overflow-x:auto;background:var(--s);border-radius:8px;border:1px solid var(--line);margin-top:10px}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:8px 14px;border-top:1px solid var(--soft);vertical-align:top}thead th{border-top:0;background:var(--soft);font-weight:600;font-size:13px}
 .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -20,22 +21,32 @@ details.q{background:var(--s);border:1px solid var(--line);border-radius:8px;mar
 details.q[open]>summary{border-bottom:1px solid var(--soft)}.tag{font-size:13px;white-space:nowrap}.meta{font-size:13px;color:var(--ink2);white-space:nowrap}
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:12px 14px 14px}@media(max-width:760px){.cols{grid-template-columns:1fr}}
 .cols h3{font-size:14px;margin:0 0 4px;font-weight:600}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12.5px/1.5 ui-monospace,monospace;margin:4px 0 10px;background:var(--bg);padding:8px 10px;border-radius:6px}
-.err{color:#9a3a12}.nw{white-space:nowrap}details.p summary{cursor:pointer;color:var(--pine)}main{padding-bottom:72px}[hidden]{display:none!important}
+.notes p{margin:0 0 12px}.notes code{font:13px ui-monospace,monospace;background:var(--soft);padding:1px 5px;border-radius:4px}.err{color:#9a3a12}.nw{white-space:nowrap}details.p summary{cursor:pointer;color:var(--pine)}main{padding-bottom:72px}[hidden]{display:none!important}
+[role=tablist]{display:flex;gap:4px;margin-top:2px}[role=tab]{font:inherit;font-weight:500;background:none;border:0;border-bottom:3px solid transparent;padding:8px 14px 9px;color:var(--ink2);cursor:pointer}[role=tab]:hover{color:var(--ink)}[role=tab][aria-selected=true]{color:var(--pine);border-color:var(--pine);font-weight:600}
+header .top{padding-bottom:0}#chart svg{display:block;width:100%;height:auto;background:var(--s);border:1px solid var(--line);border-radius:8px;margin-top:14px}#chart text{font:13px "Avenir Next","Segoe UI",system-ui,sans-serif;fill:var(--ink2)}#chart .v{font-weight:600;fill:var(--ink)}#chart .hit{fill:transparent;cursor:pointer}#chart .hit:hover,#chart .hit:focus-visible{fill:rgba(15,91,74,.06);outline:none}
+#tip{position:fixed;display:none;pointer-events:none;background:var(--ink);color:#fff;padding:7px 11px;border-radius:6px;font-size:13px;max-width:340px;z-index:9;white-space:pre-line}
 </style></head><body>
-<header><div class="wrap top"><strong>FINCH on Snowflake: model runs</strong><label id="pick">Run<select id="run"></select></label></div></header>
+<header><div class="wrap top"><strong>FINCH on Snowflake: model runs</strong></div>
+<div class="wrap" role="tablist" aria-label="Sections"><button role="tab" id="t-run" aria-controls="p-run">Run details</button><button role="tab" id="t-trend" aria-controls="p-trend">Accuracy by run</button></div></header>
 <main class="wrap">
+<section role="tabpanel" id="p-trend" aria-labelledby="t-trend"><h1 id="thead"></h1><p class="mut" id="tnote"></p><div class="legend" id="tlegend"></div><div id="chart"></div>
+<h2>All runs</h2><div class="scroll"><table id="runs"></table></div></section>
+<section role="tabpanel" id="p-run" aria-labelledby="t-run">
+<div class="filters" style="margin-top:20px"><label>Run<select id="runpick"></select></label></div>
 <h1 id="title"></h1><p class="mut" id="label"></p>
 <div class="score"><b id="pct"></b><span id="frac"></span></div>
 <div class="bar big" id="total"></div><div class="legend" id="legend"></div>
 <dl class="facts" id="facts"></dl>
-<details class="p" style="margin-top:12px"><summary>Show the prompt the model got (first question)</summary><pre id="prompt"></pre></details>
+<div id="notesbox"><h2>Notes</h2><div id="notes" class="notes"></div></div>
+<p style="margin-top:14px"><button class="btn" id="showprompt" type="button">View the prompt</button> <span class="mut" style="font-size:13px">the exact text the model received (first question; each question has its own button below)</span></p>
 <h2 id="chead"></h2><p class="mut" id="cnote"></p><div class="scroll"><table id="changes"></table></div>
 <h2>By difficulty</h2><div class="scroll"><table id="bydiff"></table></div>
 <h2>By joins the gold SQL needs</h2><div class="scroll"><table id="byjoin"></table></div>
 <h2>Every question</h2><p class="mut">Open a question to compare the gold SQL and answer (FINCH's, run on SQLite) with the model's SQL and its answer from Snowflake.</p>
 <div class="filters"><label>Result<select id="fres"></select></label><label>Search question or SQL<input id="fq" type="search" size="30"></label></div>
-<p class="mut" id="shown" style="margin-top:10px"></p><div id="list"></div>
-</main>
+<p class="mut" id="shown" style="margin-top:10px"></p><div id="list"></div></section>
+</main><div id="tip" role="status"></div>
+<dialog id="pdlg" aria-labelledby="ptitle"><div class="dhead"><div><strong id="ptitle"></strong><p class="mut" id="psub"></p></div><button class="btn sm" id="pclose" type="button">Close</button></div><pre id="ptext"></pre></dialog>
 <script type="application/json" id="data">__DATA__</script>
 <script>
 const D=JSON.parse(document.getElementById('data').textContent),RUNS=D.runs,$=i=>document.getElementById(i);
@@ -47,28 +58,58 @@ function bar(host,c){host.replaceChildren();for(const k in K)if(c[k]){const i=el
 function table(id,head,data){const t=$(id);t.replaceChildren();const h=el('tr');head.forEach(([x,c])=>h.append(el('th',x,c)));const a=el('thead'),b=el('tbody');a.append(h);data.forEach(r=>{const tr=el('tr');r.forEach((x,i)=>{const td=el('td',null,head[i][1]);td.append(x);tr.append(td)});b.append(tr)});t.append(a,b)}
 function group(R,f,order){const m={};for(const r of R){const k=f(r),o=m[k]||(m[k]={n:0});o.n++;o[kind(r)]=(o[kind(r)]||0)+1}
  return(order||Object.keys(m).sort((a,b)=>a-b)).filter(k=>m[k]).map(k=>{const o=m[k],s=o.n-(o.skipped||0),b=el('div',null,'bar');bar(b,o);return[String(k),nf(o.n),nf(o.correct||0),pc(o.correct||0,s),b]})}
-function show(){const run=RUNS[+$('run').value],R=run.results,c={};R.forEach(r=>c[kind(r)]=(c[kind(r)]||0)+1);const scored=R.length-(c.skipped||0);
+function show(){const run=RUNS[+$('runpick').value],R=run.results,c={};R.forEach(r=>c[kind(r)]=(c[kind(r)]||0)+1);const scored=R.length-(c.skipped||0);
  $('title').textContent=`${run.name}: ${run.model} on ${[...new Set(R.map(r=>r.db_id))].join(', ')}`;$('label').textContent=run.label||'';
  $('pct').textContent=pc(c.correct||0,scored);$('frac').textContent=`${nf(c.correct||0)} of ${nf(scored)} questions answered correctly (execution accuracy)`;
  bar($('total'),c);$('legend').replaceChildren(...Object.keys(K).filter(k=>c[k]).map(k=>{const s=el('span'),w=el('i',null,'sw');w.style.background=`var(--${k})`;s.append(w,`${K[k]} ${nf(c[k])}`);return s}));
- const F=[['Model',run.model],['Run id',run.run_id],['Run at',run.at],['Examples in prompt',run.shots?`${run.shots} similar questions`:'None'],['Questions',`${nf(R.length)} (${nf(c.skipped||0)} skipped)`],['Scoring','Same rows as the gold answer, in any order unless the gold SQL has ORDER BY; numbers to about 5 significant figures']];
- $('facts').replaceChildren(...F.flatMap(([a,b])=>[el('dt',a),el('dd',b)]));$('prompt').textContent=(R.find(r=>r.prompt)||{}).prompt||'';changes(run);
+ const F=[['Model',run.model],['Run id',run.run_id],['Run at',run.at],['Time taken',run.seconds==null?'not recorded':`${dur(run.seconds)} for ${nf(R.length)} questions (${(run.seconds/R.length).toFixed(1)}s each on average)`],['Examples in prompt',run.shots?`${run.shots} similar questions`:'None'],['Questions',`${nf(R.length)} (${nf(c.skipped||0)} skipped)`],['Scoring','Same rows as the gold answer, in any order unless the gold SQL has ORDER BY; numbers to about 5 significant figures']];
+ $('facts').replaceChildren(...F.flatMap(([a,b])=>[el('dt',a),el('dd',b)]));const first=R.find(r=>r.prompt);$('showprompt').disabled=!first;$('showprompt').onclick=()=>prompt(run,first);changes(run);notes(run);
  const H=n=>[[n],['Questions','n'],['Correct','n'],['Accuracy','n'],['Split']];
  table('bydiff',H('Difficulty'),group(R,r=>r.difficulty,['easy','medium','hard']));table('byjoin',H('Joins'),group(R,joins));
  $('fres').replaceChildren(el('option','All results'),...Object.keys(K).filter(k=>c[k]).map(k=>{const o=el('option',`${K[k]} (${c[k]})`);o.value=k;return o}));$('fres').options[0].value='';list()}
-function changes(run){const last=+$('run').value===RUNS.length-1,C=run.changes;$('chead').textContent=run.run_no===1?'Database state for this run':`Changes to the database since Run ${run.run_no-1}`;
+function changes(run){const last=+$('runpick').value===RUNS.length-1,C=run.changes;$('chead').textContent=run.run_no===1?'Database state for this run':`Changes to the database since Run ${run.run_no-1}`;
  $('cnote').textContent=(run.run_no===1?'Everything done to the Snowflake database before this first run.':C.length?'':'None: same database as the previous run.')+(last&&D.pending.length?` ${many(D.pending.length,'change')} made since this run ${D.pending.length===1?'is':'are'} not yet tested by any run: see the end of this list.`:'');
  const rowsOf=(L,tag)=>L.map(c=>[c.at,c.db_id||'all',c.kind,tag?`${c.description} (${tag})`:c.description]);
  table('changes',[['When','nw'],['Database'],['Kind'],['Change']],[...rowsOf(C),...(last?rowsOf(D.pending,'not yet tested'):[])])}
+const dur=s=>s==null?'not recorded':s<60?`${s.toFixed(1)}s`:`${Math.floor(s/60)}m ${String(Math.round(s%60)).padStart(2,'0')}s`;
+function notes(run){$('notesbox').hidden=!run.notes;$('notes').replaceChildren(...(run.notes||'').split(/\n\s*\n/).map(par=>{const p=el('p');par.split('`').forEach((t,i)=>p.append(i%2?el('code',t):t));return p}))}
+function prompt(run,r){$('ptitle').textContent=`${run.name}: prompt sent to ${run.model}`;$('psub').textContent=r?`For: ${r.question}`:'';$('ptext').textContent=r?r.prompt:'No prompt was recorded for this run.';$('pdlg').showModal();$('ptext').scrollTop=0}
+$('pclose').onclick=()=>$('pdlg').close();$('pdlg').onclick=e=>{if(e.target===$('pdlg'))$('pdlg').close()};
 const many=(n,w)=>`${nf(n)} ${w}${n===1?'':'s'}`;
-function list(){const R=RUNS[+$('run').value].results,f=$('fres').value,s=$('fq').value.trim().toLowerCase(),host=$('list');host.replaceChildren();
+function list(){const R=RUNS[+$('runpick').value].results,f=$('fres').value,s=$('fq').value.trim().toLowerCase(),host=$('list');host.replaceChildren();
  const L=R.filter(r=>(!f||kind(r)===f)&&(!s||(r.question+' '+r.gold_sql+' '+(r.pred_sql||'')).toLowerCase().includes(s)));$('shown').textContent=`Showing ${nf(L.length)} of ${nf(R.length)}.`;
  for(const r of L){const d=el('details',null,'q'),sm=el('summary'),k=kind(r),t=el('span',null,'tag'),w=el('i',null,'sw');w.style.background=`var(--${k})`;t.append(w,K[k].split(' (')[0]);
-  sm.append(t,el('span',r.question),el('span',`${r.difficulty} · ${joins(r)} join${joins(r)===1?'':'s'}`,'meta'));d.append(sm);
+  sm.append(t,el('span',r.question),el('span',`${r.difficulty} · ${joins(r)} join${joins(r)===1?'':'s'}${r.seconds!=null?' · '+dur(r.seconds):''}`,'meta'));d.append(sm);
   d.addEventListener('toggle',()=>{if(!d.open||d.children.length>1)return;const g=el('div'),m=el('div'),cols=el('div',null,'cols');
    g.append(el('h3','Gold SQL (FINCH, on SQLite)'),el('pre',r.gold_sql),el('h3',`Gold answer${r.gold_rows!=null?` (${nf(r.gold_rows)} rows)`:''}`),el('pre',r.gold_error||rows(r.gold,r.gold_rows)));
-   m.append(el('h3',`${RUNS[+$('run').value].model} SQL (on Snowflake)`),el('pre',r.pred_sql||'(none)'),el('h3',r.pred_error?'Error':`Model answer${r.pred_rows!=null?` (${nf(r.pred_rows)} rows)`:''}`),el('pre',r.pred_error||rows(r.pred,r.pred_rows),r.pred_error?'err':null));
-   cols.append(g,m);d.append(cols)});host.append(d)}}
-RUNS.forEach((r,i)=>{const o=el('option',`${r.name}${r.label?': '+r.label.split('.')[0]:''}`);o.value=i;$('run').append(o)});$('pick').hidden=RUNS.length<2;$('run').value=RUNS.length-1;
-$('run').onchange=show;$('fres').onchange=list;$('fq').oninput=list;show();
+   m.append(el('h3',`${RUNS[+$('runpick').value].model} SQL (on Snowflake)`),el('pre',r.pred_sql||'(none)'),el('h3',r.pred_error?'Error':`Model answer${r.pred_rows!=null?` (${nf(r.pred_rows)} rows)`:''}`),el('pre',r.pred_error||rows(r.pred,r.pred_rows),r.pred_error?'err':null));
+   const pb=el('button','View the prompt','btn sm');pb.type='button';pb.disabled=!r.prompt;pb.onclick=()=>prompt(RUNS[+$('runpick').value],r);m.append(pb);cols.append(g,m);d.append(cols)});host.append(d)}}
+RUNS.forEach((r,i)=>{const o=el('option',`${r.name}${r.label?': '+r.label.split('.')[0]:''}`);o.value=i;$('runpick').append(o)});$('runpick').value=0;
+function tip(n,text){const go=e=>{const b=n.getBoundingClientRect(),t=$('tip');t.textContent=text;t.style.display='block';t.style.left=Math.max(8,Math.min((e.clientX||b.left)+12,innerWidth-t.offsetWidth-8))+'px';t.style.top=Math.min((e.clientY||b.bottom)+14,innerHeight-t.offsetHeight-8)+'px'};n.addEventListener('pointermove',go);n.addEventListener('focus',go);for(const x of['pointerleave','blur'])n.addEventListener(x,()=>$('tip').style.display='none')}
+const SER=[['overall','Overall','var(--pine)',3],['easy','Easy','#8db4e6',2],['medium','Medium','#3b78c9',2],['hard','Hard','#173f78',2]];
+function acc(run){const o={};for(const[k]of SER){const R=run.results.filter(r=>!r.gold_error&&(k==='overall'||r.difficulty===k));o[k]=R.length?{a:R.filter(r=>r.correct).length/R.length,c:R.filter(r=>r.correct).length,n:R.length}:null}return o}
+function trend(){const n=RUNS.length,A=RUNS.map(acc),best=Math.max(...A.map(a=>a.overall?a.overall.a:0)),f=v=>v?`${(100*v.a).toFixed(1)}%`:'–';
+ $('thead').textContent=n===1?`One run so far: ${f(A[0].overall)}`:`${n} runs, best ${(100*best).toFixed(1)}%`;
+ $('tnote').textContent='Accuracy is the share of scored questions answered correctly, overall and by difficulty. Compare runs on the same questions: check the database and question count in the table below. Click a run to open it.'+(n===1?' Later runs will join these lines.':'');
+ $('tlegend').replaceChildren(...SER.map(([k,l,c,w])=>{const s=el('span'),i=el('i',null,'ln');i.style.cssText=`background:${c};height:${w+1}px`;s.append(i,l);return s}));
+ const W=1100,H=360,L=56,Rt=150,T=30,B=46,x=i=>n===1?L+(W-L-Rt)/2:L+(W-L-Rt)*i/(n-1),y=a=>T+(H-T-B)*(1-a),ns='http://www.w3.org/2000/svg',mk=(t,at,txt)=>{const e=document.createElementNS(ns,t);for(const k in at)e.setAttribute(k,at[k]);if(txt!=null)e.textContent=txt;return e};
+ const svg=mk('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'Accuracy by run. '+RUNS.map((r,i)=>`${r.name}: `+SER.map(([k,l])=>`${l} ${f(A[i][k])}`).join(', ')).join('. ')});
+ for(const g of[0,.25,.5,.75,1])svg.append(mk('line',{x1:L,x2:W-Rt+20,y1:y(g),y2:y(g),stroke:g?'#e3ebe8':'#b9c9c2','stroke-width':1}),mk('text',{x:L-10,y:y(g)+4,'text-anchor':'end'},`${g*100}%`));
+ RUNS.forEach((r,i)=>svg.append(mk('text',{x:x(i),y:H-B+24,'text-anchor':'middle'},r.name)));
+ for(const[k,,c,w]of SER.slice().reverse()){const P=A.map((a,i)=>a[k]&&[x(i),y(a[k].a)]).filter(Boolean);
+  if(P.length>1)svg.append(mk('polyline',{points:P.map(p=>p.join(',')).join(' '),fill:'none',stroke:c,'stroke-width':w,'stroke-linejoin':'round','stroke-dasharray':k==='overall'?'':'6 5'}));
+  P.forEach(([px,py])=>svg.append(mk('circle',{cx:px,cy:py,r:k==='overall'?6:4.5,fill:c,stroke:'#fff','stroke-width':2})))}
+ // end labels: the last run's value per line, nudged apart so they never overlap
+ const last=A[n-1],lab=SER.filter(([k])=>last[k]).map(([k,l,c])=>({l,c,v:last[k],y:y(last[k].a)})).sort((p,q)=>p.y-q.y);
+ for(let i=1;i<lab.length;i++)lab[i].y=Math.max(lab[i].y,lab[i-1].y+17);
+ lab.forEach(o=>svg.append(mk('text',{x:x(n-1)+14,y:o.y+4,class:o.l==='Overall'?'v':''},`${o.l} ${f(o.v)}`)));
+ RUNS.forEach((r,i)=>{const w=n===1?120:Math.min(120,(W-L-Rt)/(n-1)),h=mk('rect',{x:x(i)-w/2,y:T-10,width:w,height:H-T-B+20,class:'hit',tabindex:0,role:'button','aria-label':`Open ${r.name}`});
+  tip(h,`${r.name}: ${r.label||''}\n${r.model}${r.seconds!=null?', took '+dur(r.seconds):''}\n`+SER.map(([k,l])=>`${l}: ${f(A[i][k])}${A[i][k]?` (${A[i][k].c} of ${A[i][k].n})`:''}`).join('\n'));
+  const open=()=>{$('runpick').value=i;show();go('run');scrollTo(0,0)};h.onclick=open;h.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open()}};svg.append(h)});
+ $('chart').replaceChildren(svg);
+ table('runs',[['Run','nw'],['When','nw'],['Model','nw'],['Database'],['Label'],['Questions','n'],['Overall','n'],['Easy','n'],['Medium','n'],['Hard','n'],['Time','n'],['DB changes','n'],['Prompt']],
+  RUNS.map((r,i)=>[r.name,r.at,r.model,r.db_filter||'all',r.label||'',nf(A[i].overall?A[i].overall.n:0),...SER.map(([k])=>f(A[i][k])),r.seconds==null?'–':dur(r.seconds),nf(r.changes.length),(()=>{const b=el('button','View','btn sm'),f=r.results.find(x=>x.prompt);b.type='button';b.disabled=!f;b.onclick=()=>prompt(r,f);return b})()]))}
+const tabs=['run','trend'];function go(t){tabs.forEach(k=>{const on=k===t,b=$('t-'+k);b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1;$('p-'+k).hidden=!on});history.replaceState(null,'','#'+t)}
+tabs.forEach((k,i)=>{const b=$('t-'+k);b.onclick=()=>go(k);b.onkeydown=e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){const n=tabs[(i+(e.key==='ArrowRight'?1:tabs.length-1))%tabs.length];go(n);$('t-'+n).focus()}}});
+$('runpick').onchange=show;$('fres').onchange=list;$('fq').oninput=list;show();trend();go(location.hash==='#trend'?'trend':'run');
 </script></body></html>

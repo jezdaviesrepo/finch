@@ -1,0 +1,23 @@
+{
+  "DISTRICT": {
+    "comment": "Demographic and economic statistics for each of the 77 districts (okresy) of the Czech Republic in the mid-1990s. A district is a local administrative area; districts are grouped into 8 regions.",
+    "columns": {
+      "DISTRICT_ID": "Identifier of the district, 1-77.",
+      "A2": "District name, written without Czech accents, e.g. 'Benesov', 'Kladno', 'Brno - mesto'. 'Hl.m. Praha' is the capital city, Prague.",
+      "A3": "Region the district belongs to. One of 8 regions: 'Prague', 'central Bohemia', 'south Bohemia', 'west Bohemia', 'north Bohemia', 'east Bohemia', 'south Moravia', 'north Moravia'. Prague is a region of its own with a single district.",
+      "A4": "Number of inhabitants (population) of the district. 42,821 to 1,204,953; the largest is Hl.m. Praha.",
+      "A5": "Number of municipalities in the district with fewer than 500 inhabitants. 0 to 151.",
+      "A6": "Number of municipalities in the district with 500 to 1,999 inhabitants. 0 to 70.",
+      "A7": "Number of municipalities in the district with 2,000 to 9,999 inhabitants. 0 to 20.",
+      "A8": "Number of municipalities in the district with 10,000 or more inhabitants. 0 to 5.",
+      "A9": "Number of cities (towns) in the district. 1 to 11.",
+      "A10": "Ratio of urban inhabitants: the percentage of the population living in towns. 33.9 to 100.0; 100 for the four city districts (Hl.m. Praha, Brno - mesto, Plzen - mesto, Ostrava - mesto).",
+      "A11": "Average monthly salary in the district, in Czech crowns (CZK). 8,110 to 12,541; highest in Hl.m. Praha, lowest in Bruntal.",
+      "A12": "Unemployment rate in 1995, as a percentage (0.2 means 0.2%). 0.2 to 7.3. Unknown (NULL) for Jesenik.",
+      "A13": "Unemployment rate in 1996, as a percentage. 0.43 to 9.4.",
+      "A14": "Number of entrepreneurs per 1,000 inhabitants. 81 to 167.",
+      "A15": "Number of crimes committed in the district in 1995 (a count, not a rate). 818 to 85,677. Unknown (NULL) for Jesenik.",
+      "A16": "Number of crimes committed in the district in 1996 (a count, not a rate). 888 to 99,107."
+    }
+  }
+}

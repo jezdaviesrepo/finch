@@ -23,6 +23,9 @@ into `data/` the first time you run it. Re-running replaces the data schemas and
 keeps `EVAL_RESULTS`. `--pairs-only` reloads just `NL_SQL_PAIRS`;
 `--keys-only` declares the keys and rewrites `TABLE_JOINS`.
 
+Every script suspends the warehouse when it finishes, even after an error, so it stops costing credits
+straight away instead of after its auto-suspend delay.
+
 ## Evaluate
 
 ```bash
@@ -55,6 +58,17 @@ changes made before it.
 ```bash
 .venv/bin/python snowflake/evaluate.py --model claude-sonnet-4-5 --db financial --sample 0 --label "..."
 .venv/bin/python snowflake/report.py --runs
+```
+
+## Context
+
+`snowflake/context/<db_id>.json` holds logical descriptions of tables and columns (meaning, units, value
+ranges, examples; no joins or SQL advice). `context.py` stores them in Snowflake as COMMENTs and logs the
+change; `evaluate.py` then shows them in the prompt (tables without descriptions keep the plain one-line form).
+
+```bash
+.venv/bin/python snowflake/context.py financial
+.venv/bin/python snowflake/history.py note 6 "what this run showed"   # notes shown on the run's page
 ```
 
 ## Report
