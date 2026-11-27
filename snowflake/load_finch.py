@@ -480,8 +480,10 @@ def to_snowflake(sql, schema):
     return tree.sql(dialect="snowflake")
 
 
-def load_pairs(sf, database):
+def load_pairs(sf, database, only=None):
     pairs = pd.DataFrame(json.loads(real_file("finch_dataset.json").read_text()))
+    if only:
+        pairs = pairs[pairs["db_id"].isin(only)]
     out, errs = [], []
     for sql, db_id in zip(pairs["SQL"], pairs["db_id"]):
         try:
@@ -536,16 +538,19 @@ def main():
     connection_args(ap)
     ap.add_argument("--pairs-only", action="store_true", help="reload BENCHMARK.NL_SQL_PAIRS only")
     ap.add_argument("--keys-only", action="store_true", help="declare primary/foreign keys and write BENCHMARK.TABLE_JOINS only")
+    ap.add_argument("--only", nargs="+", metavar="DB_ID", help="load only these databases, e.g. --only financial (saves time and credits)")
     args = ap.parse_args()
 
     sf = connect(args)
     questions = json.loads(real_file("finch_dataset.json").read_text())
+    if args.only:
+        questions = [x for x in questions if x["db_id"] in args.only]
     if args.keys_only:
         load_keys(sf, args.database, questions)
         return
     sf.cursor().execute(f"create database if not exists {args.database}")
 
-    db_ids = load_pairs(sf, args.database)
+    db_ids = load_pairs(sf, args.database, args.only)
     if args.pairs_only:
         return
     for path in sorted((ROOT / "text2sql-db").rglob("*.sqlite")):

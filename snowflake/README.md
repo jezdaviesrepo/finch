@@ -1,6 +1,7 @@
 # FINCH on Snowflake
 
 Loads the FINCH benchmark into a Snowflake database (default `FINCH`).
+Setting it up on your own (e.g. work) Snowflake account: see [INTERNAL_SETUP.md](INTERNAL_SETUP.md).
 
 | Object | Contents |
 |---|---|
@@ -13,7 +14,7 @@ Loads the FINCH benchmark into a Snowflake database (default `FINCH`).
 
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install "snowflake-connector-python[pandas]" sqlglot pyarrow
+.venv/bin/pip install -r snowflake/requirements.txt
 .venv/bin/python snowflake/load_finch.py --connection default --warehouse MY_WH
 ```
 

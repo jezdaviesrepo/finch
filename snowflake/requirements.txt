@@ -1,0 +1,4 @@
+snowflake-connector-python[pandas]==4.5.0
+pandas==2.3.3
+pyarrow==21.0.0
+sqlglot==30.33.0
