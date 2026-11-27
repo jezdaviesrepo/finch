@@ -227,6 +227,8 @@ def main():
     ap.add_argument("--difficulty", choices=["easy", "medium", "hard"])
     ap.add_argument("--timeout", type=int, default=60, help="seconds per query")
     ap.add_argument("--keys", action="store_true", help="show each table's primary and foreign keys in the prompt")
+    ap.add_argument("--no-schema", action="store_true",
+                    help="leave the tables out of the prompt (instructions and question only): tests what the model remembers")
     ap.add_argument("--label", default="", help="what this run is, shown on the report page")
     ap.add_argument("--keep-empty-gold", action="store_true",
                     help="also score questions whose gold answer is empty/zero (mostly broken gold SQL)")
@@ -289,7 +291,7 @@ def main():
                 pred_sql = r.SQL_SNOWFLAKE
             else:
                 if schema not in schemas:
-                    schemas[schema] = schema_text(cur, D, schema, keys=args.keys)
+                    schemas[schema] = "(not shown)" if args.no_schema else schema_text(cur, D, schema, keys=args.keys)
                 today = f"\nToday's date is {TODAY[r.DB_ID]}: use that literal date, not CURRENT_DATE." if r.DB_ID in TODAY else ""
                 if args.shots and schema not in pools:
                     pool = everything[(everything.DB_ID == r.DB_ID) & everything.SQL_SNOWFLAKE.notna()].drop_duplicates("QUESTION")

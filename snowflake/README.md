@@ -89,7 +89,8 @@ Two kinds of questionable gold answers are flagged and scored fairly:
 
 After editing `gold_review.json`, re-score the stored runs: `python snowflake/rescore.py && python snowflake/report.py --runs`.
 
-`--keys` adds each table's primary and foreign keys to the prompt.
+`--keys` adds each table's primary and foreign keys to the prompt. `--no-schema` leaves the tables out entirely (instructions and question only), which tests what a model remembers of a
+public dataset: Opus 5.5 got 67% of `financial` right that way.
 
 ## Disguised copy
 

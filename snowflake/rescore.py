@@ -12,7 +12,7 @@ Usage:
 """
 import json
 
-from evaluate import TIE_NOTE, also_right, gold_ties, reviewed, tie_ok
+from evaluate import TIE_NOTE, also_right, contains_result, gold_ties, reviewed, tie_ok
 from history import connect
 from load_finch import sqlite_file
 
@@ -21,10 +21,14 @@ def main():
     db, ties = connect(), {}
     with db:
         for run_no, run_id, old in db.execute("select run_no, run_id, correct from runs order by run_no").fetchall():
-            for qid, db_id, gold_sql, correct, lenient, pred, pred_rows, flag in db.execute(
-                    "select question_id, db_id, gold_sql, correct, lenient, pred_answer, pred_rows, gold_flag from results "
-                    "where run_id = ? and gold_error is null", (run_id,)).fetchall():
+            for qid, db_id, gold_sql, correct, lenient, pred, pred_rows, flag, gold, gold_rows in db.execute(
+                    "select question_id, db_id, gold_sql, correct, lenient, pred_answer, pred_rows, gold_flag, gold_answer, gold_rows "
+                    "from results where run_id = ? and gold_error is null", (run_id,)).fetchall():
                 rows = json.loads(pred) if pred is not None else None
+                gold = json.loads(gold) if gold is not None else None
+                # runs from before lenient scoring: judge lenient on the stored first 10 rows (never undoes a runtime verdict)
+                lenient = lenient or (gold is not None and rows is not None and gold_rows == pred_rows
+                                      and contains_result(gold, rows, "order by" in gold_sql.lower()))
                 if "limit" in gold_sql.lower():
                     t = ties.setdefault((db_id, gold_sql), gold_ties(sqlite_file(db_id), gold_sql))
                     if t:
